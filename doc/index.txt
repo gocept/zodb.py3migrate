@@ -1,5 +1,38 @@
 .. include:: ../README.rst
 
+Usage
+=====
+
+You must install `zodb.py3migrate` into your project, so it has access to your
+persistent classes when resolving ZODB objects. After installing, you can use
+the entry point `bin/zodb-py3migrate path/to/Data.fs` to run the script.
+
+The script shows a list of attributes group by their class that are Python 2
+strings, i.e. binary string. Decide for each attribute if it really is a binary
+string, i.e. for images, or if it should be text, i.e. unicode.
+
+Attributes that should remain binary strings must become an instance of
+`zodbpickle.binary` so ZODB knows that this fields should be treated as binary.
+
+Since ZODB will read all non-marked binary strings as unicode, you must convert
+all text fields to unicode and adjust the class accordingly.
+
+Your ZODB is Python 3 ready if the script does not output any attribute
+anymore, since all binary string were either converted to unicode or marked as
+binary.
+
+
+Example
+=======
+
+.. code-block:: shell
+
+    $ bin/zodb-py3migrate path/to/Data.fs
+    Found 3 binary fields, including how often they occurred.
+      foo.bar.Baz.image (12)
+      foo.bar.Baz.legacy (1)
+      foo.bar.Baz.text (12)
+
 .. toctree::
     :maxdepth: 2
 

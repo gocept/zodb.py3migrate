@@ -17,17 +17,21 @@ setup(
     version='0.1.dev0',
 
     install_requires=[
+        'ZODB3',
         'setuptools',
     ],
 
     extras_require={
         'test': [
+            'mock',
+            'pytest',
+            'transaction',
         ],
     },
 
     entry_points={
         'console_scripts': [
-            # 'binary-name = zodb.py3migrate.module:function'
+            'zodb-py3migrate = zodb.py3migrate.migrate:main'
         ],
     },
 

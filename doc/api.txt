@@ -5,4 +5,4 @@ API Reference
 .. autosummary::
     :toctree: ./_api/
 
-..  zodb.py3migrate.foo
+..  zodb.py3migrate.migrate
