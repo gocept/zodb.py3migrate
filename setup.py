@@ -33,19 +33,16 @@ setup(
 
     author='gocept <mail@gocept.com>',
     author_email='mail@gocept.com',
-    license='ZPL 2.1',
+    license='MIT License',
     url='https://bitbucket.org/gocept/zodb.py3migrate/',
 
     keywords='zodb python3',
     classifiers="""\
-License :: OSI Approved :: Zope Public License
+License :: OSI Approved
+License :: OSI Approved :: MIT License
 Programming Language :: Python
 Programming Language :: Python :: 2
 Programming Language :: Python :: 2.7
-Programming Language :: Python :: 3
-Programming Language :: Python :: 3.3
-Programming Language :: Python :: 3.4
-Programming Language :: Python :: 3.5
 Programming Language :: Python :: Implementation :: CPython
 """[:-1].split('\n'),
     description=__doc__.strip(),

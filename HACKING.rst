@@ -12,10 +12,10 @@ Developing zodb.py3migrate
     https://pypi.python.org/pypi/zodb.py3migrate
 
 :Issues:
-    https://bitbucket.org/gocept/zodb.py3migrate/issues
+    https://github.com/gocept/zodb.py3migrate/issues
 
 :Source code:
-    https://bitbucket.org/gocept/zodb.py3migrate
+    https://github.com/gocept/zodb.py3migrate
 
 :Current change log:
-    https://bitbucket.org/gocept/zodb.py3migrate/raw/tip/CHANGES.rst
+    https://raw.githubusercontent.com/gocept/zodb.py3migrate/master/CHANGES.rst
