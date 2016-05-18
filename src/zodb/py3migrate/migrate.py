@@ -38,13 +38,13 @@ def get_data(obj):
     except ZODB.POSException.POSKeyError as e:
         # For example if a ZODB Blob was not found.
         log.error('POSKeyError: %s', e)
-        return None, None
+        return None, ''
 
     try:
-        return vars(obj), '{klassname}.{key} ({type_})'
+        return vars(obj), '{klassname}.{key} ({type_}'
     except TypeError:
         result = None
-        format_string = '{klassname}[{key!r}] ({type_})'
+        format_string = '{klassname}[{key!r}] ({type_}'
         if isinstance(obj, (
                 BTrees.IOBTree.IOTreeSet,
                 BTrees.LOBTree.LOTreeSet,
@@ -89,7 +89,7 @@ def get_classname(obj):
     return obj.__class__.__module__ + '.' + obj.__class__.__name__
 
 
-def parse(storage, watermark=10000):
+def parse(storage, watermark=10000, verbose=False):
     """Parse a file storage.
 
     Returns a tuple `(result, errors)`
@@ -117,18 +117,23 @@ def parse(storage, watermark=10000):
         klassname = get_classname(obj)
 
         data, format_string = get_data(obj)
+        if verbose:
+            format_string += ': {value!r:.30})'
+        else:
+            format_string += ')'
         if data is None:
             errors[klassname] += 1
             continue
 
         for key, value in data.items():
             try:
+                type_ = find_binary(value)
+                if type_ is not None:
+                    result[format_string.format(**locals())] += 1
                 type_ = find_binary(key)
                 if type_ is not None:
                     type_ = 'key'
-                    result[format_string.format(**locals())] += 1
-                type_ = find_binary(value)
-                if type_ is not None:
+                    value = key
                     result[format_string.format(**locals())] += 1
             except:
                 log.error('Could not execute %r', value, exc_info=True)
@@ -160,7 +165,7 @@ def print_results(result, errors, verbose):
 def analyze(zodb_path, blob_dir=None, verbose=False):
     """Analyse a whole file storage and print out the results."""
     storage = ZODB.FileStorage.FileStorage(zodb_path, blob_dir=blob_dir)
-    print_results(*parse(storage), verbose=verbose)
+    print_results(*parse(storage, verbose=verbose), verbose=verbose)
 
 
 def sorted_by_key(dict):

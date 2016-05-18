@@ -167,6 +167,19 @@ def test_migrate__parse__9(zodb_storage, caplog):
         assert caplog.records()[-1].exc_text.endswith('RuntimeError')
 
 
+def test_migrate__parse__10(zodb_storage, zodb_root):
+    """It includes first bytes of the string in result if verbose is true."""
+    zodb_root['obj'] = Example(
+        data=[0, b'löng string containing an umlaut.'])
+    transaction.commit()
+    result, errors = zodb.py3migrate.migrate.parse(zodb_storage, verbose=True)
+    assert {
+        "zodb.py3migrate.tests.test_migrate.Example.data "
+        "(iterable: [0, 'l\\xc3\\xb6ng string contai)": 1,
+    } == result
+    assert {} == errors
+
+
 def test_migrate__print_results__1(capsys):
     """It prints only the results if `verbose` is `False`."""
     print_results({'foo.Bar.baz': 3}, {'asdf.Qwe': 2}, verbose=False)
