@@ -40,23 +40,33 @@ def parse(storage, watermark=10000):
         oid, tid, data, next = storage.record_iternext(next)
         if next is None:
             run = False
+
         obj = connection.get(oid)
         try:
             wake_object(obj)
         except ZODB.POSException.POSKeyError as e:
             log.error('POSKeyError: %s', e)
+
         klassname = obj.__class__.__module__ + '.' + obj.__class__.__name__
         try:
             attribs = vars(obj)
         except TypeError:
             errors[klassname] += 1
             continue
+
         for key, value in attribs.items():
             if isinstance(value, str):
                 result['.'.join([klassname, key])] += 1
+            if hasattr(value, '__iter__'):
+                for v in value:
+                    if isinstance(v, str):
+                        result['.'.join([klassname, key]) + ' (iterable)'] += 1
+                        break
+
         count += 1
         if count % watermark == 0:
             log.warn('%s of about %s objects analyzed.', count, len_storage)
+
     return result, errors
 
 

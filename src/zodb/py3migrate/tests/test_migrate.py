@@ -48,7 +48,7 @@ def test_migrate__main__3():
 
 def test_migrate__parse__1(zodb_storage, zodb_root):
     """It parses storage and returns result of analysis."""
-    zodb_root['obj'] = Example(b'bar', u'foo', Example(b'baz', u'bumm'))
+    zodb_root[u'obj'] = Example(b'bar', u'foo', Example(b'baz', u'bumm'))
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage, watermark=1)
     assert {
@@ -59,7 +59,7 @@ def test_migrate__parse__1(zodb_storage, zodb_root):
 
 def test_migrate__parse__2(zodb_storage, zodb_root):
     """It returns objects without a dict as errors."""
-    zodb_root['tree'] = BTrees.OOBTree.OOBTree()
+    zodb_root[u'tree'] = BTrees.OOBTree.OOBTree()
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {} == result
@@ -78,6 +78,18 @@ def test_migrate__parse__3(zodb_storage, zodb_root, caplog):
         zodb.py3migrate.migrate.parse(zodb_storage)
     rec = caplog.records()[-1]
     assert "POSKeyError: '\\x00'" == rec.getMessage()
+
+
+def test_migrate__parse__4(zodb_storage, zodb_root):
+    """It counts iterable fields that contain binary strings."""
+    zodb_root[u'obj'] = Example(b'bar', u'foo', ['binary', 'another_binary'])
+    transaction.commit()
+    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    assert {
+        'zodb.py3migrate.tests.test_migrate.Example.binary_string': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.reference (iterable)': 1
+    } == result
+    assert {} == errors
 
 
 def test_migrate__print_results__1(capsys):
