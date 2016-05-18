@@ -32,7 +32,8 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'zodb-py3migrate = zodb.py3migrate.migrate:main'
+            'zodb-py3migrate = zodb.py3migrate.migrate:main',
+            'zodb-py3migrate-magic = zodb.py3migrate.magic:main',
         ],
     },
 

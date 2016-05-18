@@ -45,6 +45,9 @@ Upgrade workflow
 #. Convert the `Python Script` objects inside the ZODB to be Python 3
    compatible. (Find all of them using the `Find` tab in the ZMI.)
 
+#. Call `bin/zodb-py3migrate-magic path/to/Data.fs Python3` to convert the
+   magic bytes of the database file to claim Python 3 compatibility. (Use
+   `Python2` to revert back to Python 2.)
 
 Example call
 ============
