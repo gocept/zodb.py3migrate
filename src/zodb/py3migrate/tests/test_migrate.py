@@ -71,7 +71,7 @@ def test_migrate__parse__2(zodb_storage, zodb_root):
     } == errors
 
 
-def test_migrate__parse__3(zodb_storage, zodb_root, caplog):
+def test_migrate__parse__3(zodb_storage, caplog):
     """It logs POSKeyErrors.
 
     They occur e. g. if the file for a blob is not on the hard disk.
@@ -192,7 +192,7 @@ foo.Bar.baz (3)
 ''' == out
 
 
-def test_migrate__analyze__1(zodb_storage, zodb_root, capsys):
+def test_migrate__analyze__1(zodb_storage, capsys):
     """It runs the whole analysis for a path of a storage."""
     zodb_storage.close()
     path = zodb_storage._file_name
