@@ -1,6 +1,7 @@
-import ZODB.POSException
 from ..migrate import print_results, analyze
+import BTrees.IIBTree
 import BTrees.OOBTree
+import ZODB.POSException
 import mock
 import persistent
 import pkg_resources
@@ -59,12 +60,12 @@ def test_migrate__parse__1(zodb_storage, zodb_root):
 
 def test_migrate__parse__2(zodb_storage, zodb_root):
     """It returns objects without a dict as errors."""
-    zodb_root[u'tree'] = BTrees.OOBTree.OOBTree()
+    zodb_root[u'tree'] = BTrees.IIBTree.IIBTree()
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {} == result
     assert {
-        'BTrees.OOBTree.OOBTree': 1
+        'BTrees.IIBTree.IIBTree': 1
     } == errors
 
 
@@ -118,6 +119,20 @@ def test_migrate__parse__6(zodb_storage, zodb_root):
         'zodb.py3migrate.tests.test_migrate.Example.bin_nested_key (dict)': 1,
         'zodb.py3migrate.tests.test_migrate.Example.bin_nested_val (dict)': 1,
         'zodb.py3migrate.tests.test_migrate.Example.bin_nested_list (dict)': 1,
+    } == result
+    assert {} == errors
+
+
+def test_migrate__parse__7(zodb_storage, zodb_root):
+    """It analyzes contents of `BTree`s."""
+    zodb_root[u'tree'] = BTrees.OOBTree.OOBTree()
+    zodb_root[u'tree'][u'key'] = b'binary'
+    zodb_root[u'tree'][u'stuff'] = [{u'key': b'binary'}]
+    transaction.commit()
+    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    assert {
+        "BTrees.OOBTree.OOBTree[u'key'] (string)": 1,
+        "BTrees.OOBTree.OOBTree[u'stuff'] (iterable)": 1,
     } == result
     assert {} == errors
 

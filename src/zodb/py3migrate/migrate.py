@@ -1,4 +1,9 @@
 from ZODB.DB import DB
+import BTrees.IOBTree
+import BTrees.LOBTree
+import BTrees.OIBTree
+import BTrees.OLBTree
+import BTrees.OOBTree
 import ZODB.FileStorage
 import ZODB.POSException
 import argparse
@@ -6,6 +11,7 @@ import collections
 import email
 import logging
 import pdb  # noqa
+import persistent
 import pkg_resources
 
 
@@ -17,18 +23,43 @@ def wake_object(obj):
     getattr(obj, 'some_attribute', None)
 
 
-def get___dict__(obj):
+def get_data(obj):
+    """Return data of object and format string. Return `None` if not possible.
+
+    We try to fetch data by reading __dict__, but this is not possible for
+    `BTree`s. Call `keys` or `items` on obj respectively.
+
+    We use format_string to make clear that binary strings were either found as
+    an attribute of obj or as an item contained in a `BTree`.
+
+    """
     try:
         wake_object(obj)
     except ZODB.POSException.POSKeyError as e:
         # For example if a ZODB Blob was not found.
         log.error('POSKeyError: %s', e)
+        return None, None
 
     try:
-        return vars(obj)
+        return vars(obj), '{klassname}.{key} ({type_})'
     except TypeError:
-        # obj has no __dict__, e.g. a BTree.
-        return None
+        result = None
+        format_string = '{klassname}[{key!r}] ({type_})'
+        if isinstance(obj, (
+                BTrees.IOBTree.IOTreeSet,
+                BTrees.LOBTree.LOTreeSet,
+                BTrees.OIBTree.OITreeSet,
+                BTrees.OLBTree.OLTreeSet,
+                BTrees.OOBTree.OOTreeSet)):
+            result = dict.fromkeys(obj.keys())
+        if isinstance(obj, (
+                BTrees.IOBTree.IOBTree,
+                BTrees.LOBTree.LOBTree,
+                BTrees.OIBTree.OIBTree,
+                BTrees.OLBTree.OLBTree,
+                BTrees.OOBTree.OOBTree)):
+            result = obj
+        return result, format_string
 
 
 def find_binary(value):
@@ -44,6 +75,10 @@ def find_binary(value):
             if find_binary(v):
                 return 'iterable'
     return None
+
+
+def get_classname(obj):
+    return obj.__class__.__module__ + '.' + obj.__class__.__name__
 
 
 def parse(storage, watermark=10000):
@@ -71,17 +106,17 @@ def parse(storage, watermark=10000):
             run = False
 
         obj = connection.get(oid)
-        klassname = obj.__class__.__module__ + '.' + obj.__class__.__name__
+        klassname = get_classname(obj)
 
-        attribs = get___dict__(obj)
-        if attribs is None:
+        data, format_string = get_data(obj)
+        if data is None:
             errors[klassname] += 1
             continue
 
-        for key, value in attribs.items():
+        for key, value in data.items():
             type_ = find_binary(value)
             if type_ is not None:
-                result['{klassname}.{key} ({type_})'.format(**locals())] += 1
+                result[format_string.format(**locals())] += 1
 
         count += 1
         if count % watermark == 0:
