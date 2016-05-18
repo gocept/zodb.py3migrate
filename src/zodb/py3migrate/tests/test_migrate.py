@@ -92,6 +92,18 @@ def test_migrate__parse__4(zodb_storage, zodb_root):
     assert {} == errors
 
 
+def test_migrate__parse__5(zodb_storage, zodb_root):
+    """It counts iterable fields that contain iterables with binary strings."""
+    zodb_root[u'obj'] = Example(b'bar', u'foo', [0, [1, [2, [3, b'binary']]]])
+    transaction.commit()
+    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    assert {
+        'zodb.py3migrate.tests.test_migrate.Example.binary_string': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.reference (iterable)': 1
+    } == result
+    assert {} == errors
+
+
 def test_migrate__print_results__1(capsys):
     """It prints only the results if `verbose` is `False`."""
     print_results({'foo.Bar.baz': 3}, {'asdf.Qwe': 2}, verbose=False)

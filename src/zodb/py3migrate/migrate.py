@@ -31,6 +31,16 @@ def get___dict__(obj):
         return None
 
 
+def contains_binary(value):
+    if isinstance(value, str):
+        return True
+    if hasattr(value, '__iter__'):
+        for v in value:
+            if contains_binary(v):
+                return True
+    return False
+
+
 def parse(storage, watermark=10000):
     """Parse a file storage.
 
@@ -66,11 +76,9 @@ def parse(storage, watermark=10000):
         for key, value in attribs.items():
             if isinstance(value, str):
                 result['.'.join([klassname, key])] += 1
-            if hasattr(value, '__iter__'):
-                for v in value:
-                    if isinstance(v, str):
-                        result['.'.join([klassname, key]) + ' (iterable)'] += 1
-                        break
+                continue
+            if contains_binary(value):
+                result['.'.join([klassname, key]) + ' (iterable)'] += 1
 
         count += 1
         if count % watermark == 0:
