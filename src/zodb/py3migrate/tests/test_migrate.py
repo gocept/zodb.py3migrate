@@ -154,6 +154,19 @@ def test_migrate__parse__8(zodb_storage, zodb_root):
     assert {} == errors
 
 
+def test_migrate__parse__9(zodb_storage, caplog):
+    """It skips objects that cannot be parsed.
+
+    If the application code setup is incomplete, e.g. ZCML was not setup, some
+    code might not work as intended.
+
+    """
+    with mock.patch('zodb.py3migrate.migrate.find_binary',
+                    side_effect=RuntimeError):
+        result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+        assert caplog.records()[-1].exc_text.endswith('RuntimeError')
+
+
 def test_migrate__print_results__1(capsys):
     """It prints only the results if `verbose` is `False`."""
     print_results({'foo.Bar.baz': 3}, {'asdf.Qwe': 2}, verbose=False)

@@ -122,13 +122,17 @@ def parse(storage, watermark=10000):
             continue
 
         for key, value in data.items():
-            type_ = find_binary(key)
-            if type_ is not None:
-                type_ = 'key'
-                result[format_string.format(**locals())] += 1
-            type_ = find_binary(value)
-            if type_ is not None:
-                result[format_string.format(**locals())] += 1
+            try:
+                type_ = find_binary(key)
+                if type_ is not None:
+                    type_ = 'key'
+                    result[format_string.format(**locals())] += 1
+                type_ = find_binary(value)
+                if type_ is not None:
+                    result[format_string.format(**locals())] += 1
+            except:
+                log.error('Could not execute %r', value, exc_info=True)
+                continue
 
         count += 1
         if count % watermark == 0:
