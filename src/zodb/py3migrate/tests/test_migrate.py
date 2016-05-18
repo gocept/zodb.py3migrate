@@ -12,12 +12,9 @@ import zodb.py3migrate.migrate
 class Example(persistent.Persistent):
     """Object will be stored in ZODB with attributes written added in tests."""
 
-    def __init__(self, binary_string, unicode_string, reference=None):
-        assert isinstance(binary_string, str)  # !!! not python 3 compatible
-        assert isinstance(unicode_string, unicode)
-        self.binary_string = binary_string
-        self.unicode_string = unicode_string
-        self.reference = reference
+    def __init__(self, **kw):
+        for key, value in kw.items():
+            setattr(self, key, value)
 
 
 def test_migrate__main__1():
@@ -48,7 +45,10 @@ def test_migrate__main__3():
 
 def test_migrate__parse__1(zodb_storage, zodb_root):
     """It parses storage and returns result of analysis."""
-    zodb_root[u'obj'] = Example(b'bar', u'foo', Example(b'baz', u'bumm'))
+    zodb_root[u'obj'] = Example(
+        binary_string=b'bar',
+        unicode_string=u'foo',
+        reference=Example(binary_string=b'baz', unicode_string=u'bumm'))
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage, watermark=1)
     assert {
@@ -82,24 +82,22 @@ def test_migrate__parse__3(zodb_storage, zodb_root, caplog):
 
 def test_migrate__parse__4(zodb_storage, zodb_root):
     """It counts iterable fields that contain binary strings."""
-    zodb_root[u'obj'] = Example(b'bar', u'foo', ['binary', 'another_binary'])
+    zodb_root[u'obj'] = Example(data=['binary', 'another_binary'])
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {
-        'zodb.py3migrate.tests.test_migrate.Example.binary_string': 1,
-        'zodb.py3migrate.tests.test_migrate.Example.reference (iterable)': 1
+        'zodb.py3migrate.tests.test_migrate.Example.data (iterable)': 1,
     } == result
     assert {} == errors
 
 
 def test_migrate__parse__5(zodb_storage, zodb_root):
     """It counts iterable fields that contain iterables with binary strings."""
-    zodb_root[u'obj'] = Example(b'bar', u'foo', [0, [1, [2, [3, b'binary']]]])
+    zodb_root[u'obj'] = Example(data=[0, [1, [2, [3, b'binary']]]])
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {
-        'zodb.py3migrate.tests.test_migrate.Example.binary_string': 1,
-        'zodb.py3migrate.tests.test_migrate.Example.reference (iterable)': 1
+        'zodb.py3migrate.tests.test_migrate.Example.data (iterable)': 1,
     } == result
     assert {} == errors
 
