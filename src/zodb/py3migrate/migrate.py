@@ -65,7 +65,12 @@ def get_data(obj):
 def find_binary(value):
     """Return type if value is or contains binary strings. None otherwise."""
     if isinstance(value, str):
-        return 'string'
+        try:
+            value.decode('ascii')
+        except UnicodeDecodeError:
+            return 'string'
+        else:
+            return None
     elif isinstance(value, collections.Mapping):
         for k, v in value.items():
             if find_binary(k) or find_binary(v):

@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 from ..migrate import print_results, analyze
 import BTrees.IIBTree
 import BTrees.OOBTree
@@ -46,10 +48,10 @@ def test_migrate__main__3():
 
 def test_migrate__parse__1(zodb_storage, zodb_root):
     """It parses storage and returns result of analysis."""
-    zodb_root[u'obj'] = Example(
-        binary_string=b'bar',
-        unicode_string=u'foo',
-        reference=Example(binary_string=b'baz', unicode_string=u'bumm'))
+    zodb_root['obj'] = Example(
+        binary_string=b'bär',
+        unicode_string=u'föö',
+        reference=Example(binary_string=b'bär', unicode_string=u'bümm'))
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage, watermark=1)
     assert {
@@ -60,7 +62,7 @@ def test_migrate__parse__1(zodb_storage, zodb_root):
 
 def test_migrate__parse__2(zodb_storage, zodb_root):
     """It returns objects without a dict as errors."""
-    zodb_root[u'tree'] = BTrees.IIBTree.IIBTree()
+    zodb_root['tree'] = BTrees.IIBTree.IIBTree()
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {} == result
@@ -83,7 +85,7 @@ def test_migrate__parse__3(zodb_storage, zodb_root, caplog):
 
 def test_migrate__parse__4(zodb_storage, zodb_root):
     """It counts iterable fields that contain binary strings."""
-    zodb_root[u'obj'] = Example(data=['binary', 'another_binary'])
+    zodb_root['obj'] = Example(data=['bïnäry', 'anöther_binäry'])
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {
@@ -94,7 +96,7 @@ def test_migrate__parse__4(zodb_storage, zodb_root):
 
 def test_migrate__parse__5(zodb_storage, zodb_root):
     """It counts iterable fields that contain iterables with binary strings."""
-    zodb_root[u'obj'] = Example(data=[0, [1, [2, [3, b'binary']]]])
+    zodb_root['obj'] = Example(data=[0, [1, [2, [3, b'binärÿ']]]])
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {
@@ -105,12 +107,12 @@ def test_migrate__parse__5(zodb_storage, zodb_root):
 
 def test_migrate__parse__6(zodb_storage, zodb_root):
     """It counts dictionaries that contain binary strings in key or value."""
-    zodb_root[u'0'] = Example(data={u'unicode_key': u'unicode_value'})
-    zodb_root[u'1'] = Example(bin_key={b'binary_key': u'unicode_value'})
-    zodb_root[u'2'] = Example(bin_value={u'unicode_key': b'binary_value'})
-    zodb_root[u'3'] = Example(bin_nested_key={u'key': {b'bin_key': u'val'}})
-    zodb_root[u'4'] = Example(bin_nested_val={u'key': {u'key': b'bin_val'}})
-    zodb_root[u'5'] = Example(bin_nested_list={u'key': [0, [1, b'binary']]})
+    zodb_root['0'] = Example(data={u'unïcode_key': u'unïcode_value'})
+    zodb_root['1'] = Example(bin_key={b'binäry_key': u'unïcode_value'})
+    zodb_root['2'] = Example(bin_value={u'unïcode_key': b'bïnäry_value'})
+    zodb_root['3'] = Example(bin_nested_key={u'këy': {b'bïn_key': u'väl'}})
+    zodb_root['4'] = Example(bin_nested_val={u'këy': {u'këy': b'bïn_val'}})
+    zodb_root['5'] = Example(bin_nested_list={u'këy': [0, [1, b'bïnary']]})
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {
@@ -125,14 +127,15 @@ def test_migrate__parse__6(zodb_storage, zodb_root):
 
 def test_migrate__parse__7(zodb_storage, zodb_root):
     """It analyzes contents of `BTree`s."""
-    zodb_root[u'tree'] = BTrees.OOBTree.OOBTree()
-    zodb_root[u'tree'][u'key'] = b'binary'
-    zodb_root[u'tree'][u'stuff'] = [{u'key': b'binary'}]
+    zodb_root['tree'] = BTrees.OOBTree.OOBTree()
+    zodb_root['tree']['key'] = b'bïnäry'
+    zodb_root['tree']['stuff'] = [{'këy': b'binäry'}]
+    zodb_root['tree']['iter'] = [u'unicode_string']
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {
-        "BTrees.OOBTree.OOBTree[u'key'] (string)": 1,
-        "BTrees.OOBTree.OOBTree[u'stuff'] (iterable)": 1,
+        "BTrees.OOBTree.OOBTree['key'] (string)": 1,
+        "BTrees.OOBTree.OOBTree['stuff'] (iterable)": 1,
     } == result
     assert {} == errors
 
