@@ -31,14 +31,19 @@ def get___dict__(obj):
         return None
 
 
-def contains_binary(value):
+def find_binary(value):
+    """Return type if value is or contains binary strings. None otherwise."""
     if isinstance(value, str):
-        return True
-    if hasattr(value, '__iter__'):
+        return 'string'
+    elif isinstance(value, collections.Mapping):
+        for k, v in value.items():
+            if find_binary(k) or find_binary(v):
+                return 'dict'
+    elif hasattr(value, '__iter__'):
         for v in value:
-            if contains_binary(v):
-                return True
-    return False
+            if find_binary(v):
+                return 'iterable'
+    return None
 
 
 def parse(storage, watermark=10000):
@@ -74,11 +79,9 @@ def parse(storage, watermark=10000):
             continue
 
         for key, value in attribs.items():
-            if isinstance(value, str):
-                result['.'.join([klassname, key])] += 1
-                continue
-            if contains_binary(value):
-                result['.'.join([klassname, key]) + ' (iterable)'] += 1
+            type_ = find_binary(value)
+            if type_ is not None:
+                result['{klassname}.{key} ({type_})'.format(**locals())] += 1
 
         count += 1
         if count % watermark == 0:

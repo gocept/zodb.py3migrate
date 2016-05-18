@@ -52,7 +52,7 @@ def test_migrate__parse__1(zodb_storage, zodb_root):
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage, watermark=1)
     assert {
-        'zodb.py3migrate.tests.test_migrate.Example.binary_string': 2
+        'zodb.py3migrate.tests.test_migrate.Example.binary_string (string)': 2
     } == result
     assert {} == errors
 
@@ -98,6 +98,26 @@ def test_migrate__parse__5(zodb_storage, zodb_root):
     result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {
         'zodb.py3migrate.tests.test_migrate.Example.data (iterable)': 1,
+    } == result
+    assert {} == errors
+
+
+def test_migrate__parse__6(zodb_storage, zodb_root):
+    """It counts dictionaries that contain binary strings in key or value."""
+    zodb_root[u'0'] = Example(data={u'unicode_key': u'unicode_value'})
+    zodb_root[u'1'] = Example(bin_key={b'binary_key': u'unicode_value'})
+    zodb_root[u'2'] = Example(bin_value={u'unicode_key': b'binary_value'})
+    zodb_root[u'3'] = Example(bin_nested_key={u'key': {b'bin_key': u'val'}})
+    zodb_root[u'4'] = Example(bin_nested_val={u'key': {u'key': b'bin_val'}})
+    zodb_root[u'5'] = Example(bin_nested_list={u'key': [0, [1, b'binary']]})
+    transaction.commit()
+    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    assert {
+        'zodb.py3migrate.tests.test_migrate.Example.bin_key (dict)': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.bin_value (dict)': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.bin_nested_key (dict)': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.bin_nested_val (dict)': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.bin_nested_list (dict)': 1,
     } == result
     assert {} == errors
 
