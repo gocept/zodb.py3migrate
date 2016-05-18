@@ -17,6 +17,20 @@ def wake_object(obj):
     getattr(obj, 'some_attribute', None)
 
 
+def get___dict__(obj):
+    try:
+        wake_object(obj)
+    except ZODB.POSException.POSKeyError as e:
+        # For example if a ZODB Blob was not found.
+        log.error('POSKeyError: %s', e)
+
+    try:
+        return vars(obj)
+    except TypeError:
+        # obj has no __dict__, e.g. a BTree.
+        return None
+
+
 def parse(storage, watermark=10000):
     """Parse a file storage.
 
@@ -42,15 +56,10 @@ def parse(storage, watermark=10000):
             run = False
 
         obj = connection.get(oid)
-        try:
-            wake_object(obj)
-        except ZODB.POSException.POSKeyError as e:
-            log.error('POSKeyError: %s', e)
-
         klassname = obj.__class__.__module__ + '.' + obj.__class__.__name__
-        try:
-            attribs = vars(obj)
-        except TypeError:
+
+        attribs = get___dict__(obj)
+        if attribs is None:
             errors[klassname] += 1
             continue
 
