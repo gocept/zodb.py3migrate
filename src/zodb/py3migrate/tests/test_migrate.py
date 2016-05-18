@@ -140,6 +140,20 @@ def test_migrate__parse__7(zodb_storage, zodb_root):
     assert {} == errors
 
 
+def test_migrate__parse__8(zodb_storage, zodb_root):
+    """It analyzes contents of `BTreeSet`s."""
+    zodb_root['set'] = BTrees.OOBTree.OOTreeSet()
+    zodb_root['set'].insert(b'bïnäry')
+    zodb_root['set'].insert((b'ä', b'ç',))
+    transaction.commit()
+    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    assert {
+        u"BTrees.OOBTree.OOTreeSet['b\\xc3\\xafn\\xc3\\xa4ry'] (key)": 1,
+        u"BTrees.OOBTree.OOTreeSet[('\\xc3\\xa4', '\\xc3\\xa7')] (key)": 1,
+    } == result
+    assert {} == errors
+
+
 def test_migrate__print_results__1(capsys):
     """It prints only the results if `verbose` is `False`."""
     print_results({'foo.Bar.baz': 3}, {'asdf.Qwe': 2}, verbose=False)

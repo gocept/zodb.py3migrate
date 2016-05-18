@@ -64,6 +64,9 @@ def get_data(obj):
 
 def find_binary(value):
     """Return type if value is or contains binary strings. None otherwise."""
+    if isinstance(value, persistent.Persistent):
+        # Avoid duplicate analysis of the same object and circular references
+        return None
     if isinstance(value, str):
         try:
             value.decode('ascii')
@@ -119,6 +122,10 @@ def parse(storage, watermark=10000):
             continue
 
         for key, value in data.items():
+            type_ = find_binary(key)
+            if type_ is not None:
+                type_ = 'key'
+                result[format_string.format(**locals())] += 1
             type_ = find_binary(value)
             if type_ is not None:
                 result[format_string.format(**locals())] += 1
