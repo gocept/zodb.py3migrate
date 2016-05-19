@@ -1,8 +1,8 @@
-==============================
-Change log for zodb.py3migrate
-==============================
+==========
+Change log
+==========
 
 0.1 (unreleased)
 ================
 
-initial release
+* Initial release.

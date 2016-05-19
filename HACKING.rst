@@ -1,6 +1,6 @@
-==========================
-Developing zodb.py3migrate
-==========================
+==========
+Developing
+==========
 
 :Author:
     `gocept <http://gocept.com/>`_ <mail@gocept.com>

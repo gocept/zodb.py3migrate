@@ -1,0 +1,139 @@
+===============
+zodb.py3migrate
+===============
+
+Reason for this package
+=======================
+
+It is not possible to use a ``ZODB`` database with both Python 2 and Python 3.
+There are the following reasons for this behavior:
+
+#. Given you have a database created using Python 2. When reading this database
+   using Python 3 all string
+   objects will be read as Python 3 string objects (aka ``unicode``) requiring
+   them to be ASCII encoded. If actual binary data is stored in such a ``str`` object its class
+   has to inherit ``zodbpickle.binary``, so it will be unpickled as ``binary``.
+#. Because of reason #1 ``ZODB`` 4.x used different magic bytes (the
+   first bytes of the database file) for the different Python versions and does
+   not allow to open a database with a Python version which does not match
+   the magic bytes.
+
+Upgrade workflow
+================
+
+#. Install ``zodb.py3migrate`` into your project, so it has access to your
+   persistent classes when reading objects from the ZODB.
+
+#. Use the entry point ``bin/zodb-py3migrate path/to/Data.fs`` to run the
+   script.
+
+   * The script shows a list of attributes and keys grouped by their class that
+     need to be converted because they are binary strings with an encoding different from ASCII. You have to decide for each attribute if it really
+     is a binary string (e. g. an image), or if it should be text, i. e.
+     converted to ``unicode``.
+
+     * Attributes that should remain binary strings must become an instance of
+       ``zodbpickle.binary`` so ZODB knows that this string are to be treated
+       as binary data.
+
+     * Since ZODB will read all non-marked binary strings as unicode, all text
+       fields to ``unicode`` and adjust the class accordingly.
+
+   * Your ZODB is Python 3 ready if the script does not output any attribute,
+     since all binary strings were either converted to ``unicode`` or
+     marked as binary.
+
+   * .. note:: The displayed total number of objects in the ``ZODB`` is only an
+               approximation as returned by the ``FileStorage`` API.
+
+#. Convert binary attributes in your code base to Python 3.
+
+   * Mark actual binary attributes with ``zodbpickle.binary``. This way they
+     will become compatible with Python 2 and Python 3,  so you can continue
+     using Python 2 without writing incompatible data.
+
+   * If you only need Python 3 compatibility it is sufficient to use ``bytes``.
+
+#. Convert the ``PythonScript`` objects inside the ZODB to be Python 3
+   compatible code. (Find all of them using the ``Find`` tab in the ZMI.)
+
+#. Convert existing data in the ZODB for Python 3 compatibility by calling
+   ``bin/zodb-py3migrate path/to/Data.fs --config=conversion.ini``.
+
+   * .. warning:: This call changes the database file in place, so only call
+                  it on a copy of your live ZODB.
+
+   * Example for conversion config file, i. e. ``conversion.ini`` in example
+     call above.
+
+     .. code-block:: pacmanconf
+
+         [zodbpickle.binary]
+         foo.bar.Baz.image
+
+         [utf-8]
+         foo.bar.Baz.text
+         foo.bar.Baz.title
+         BTrees.OOBTree.OOBTree['7b6d22fa-594e']
+         persistent.mapping.PersistentMapping['number-1']
+
+         [latin-1]
+         foo.bar.Baz.legacy
+         persistent.list.PersistentList[1]
+
+   * All entries of the section ``[zodbpickle.binary]`` will be wrapped into
+     ``zodbpickle.binary``, whereas all entries of other sections will be
+     decoded to unicode using the section name as encoding.
+
+   * You might use the result of the analyse call described in step #2 to build
+     the config file.
+
+   * To convert a value inside a ``BTree`` or in a ``PersistentMapping``, the
+     ``repr()`` of the key must be given in square brackets. (See example
+     above.)
+
+   * To convert a value inside a ``PersistentList``, the
+     index of the value must be given in square brackets. (See example above.)
+
+   * .. note::
+               * The conversion only changes values, but not keys, since this
+                 would break the application code.
+
+               * Converting values in a ``BTree.*.*TreeSet`` is not (yet)
+                 supported.
+
+               * Converting values nested in non-persistent objects is not
+                 supported.
+
+   * After converting binary strings to ``zodbpickle.binary``, your
+     application needs the ``zodbpickle`` package as install dependency.
+     Otherwise the converted objects will be broken.
+
+#. Call ``bin/zodb-py3migrate-magic path/to/Data.fs Python3`` to convert the
+   magic bytes of the database file to claim Python 3 compatibility. (Use
+   ``Python2`` as second argument to revert back to Python 2.)
+
+   * .. warning:: This call changes the database file in place, so only call
+                  it on a copy of your live ZODB.
+
+Example calls
+=============
+
+Analyze the ZODB:
+
+.. code-block:: none
+
+    $ bin/zodb-py3migrate path/to/Data.fs
+    Found 3 binary fields: (number of occurrences)
+      foo.bar.Baz.image is string (12)
+      foo.bar.Baz.legacy is iterable (1)
+      foo.bar.Baz.text is string (23)
+
+Convert the ZODB:
+
+.. code-block:: none
+
+    $ bin/zodb-py3migrate path/to/Data.fs --config=conversion.ini
+    Converted 2 binary fields: (number of occurrences)
+      foo.bar.Baz.image (12)
+      foo.bar.Baz.text (23)
