@@ -112,7 +112,7 @@ def test_migrate__analyze_storage__1(zodb_storage, zodb_root):
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
-        'zodb.py3migrate.tests.test_migrate.Example.binary_string (string)': 2
+        'zodb.py3migrate.tests.test_migrate.Example.binary_string is string': 2
     } == result
     assert {} == errors
 
@@ -134,7 +134,7 @@ def test_migrate__analyze_storage__4(zodb_storage, zodb_root):
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
-        'zodb.py3migrate.tests.test_migrate.Example.data (iterable)': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.data is iterable': 1,
     } == result
     assert {} == errors
 
@@ -145,7 +145,7 @@ def test_migrate__analyze_storage__5(zodb_storage, zodb_root):
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
-        'zodb.py3migrate.tests.test_migrate.Example.data (iterable)': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.data is iterable': 1,
     } == result
     assert {} == errors
 
@@ -161,11 +161,11 @@ def test_migrate__analyze_storage__6(zodb_storage, zodb_root):
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
-        'zodb.py3migrate.tests.test_migrate.Example.bin_key (dict)': 1,
-        'zodb.py3migrate.tests.test_migrate.Example.bin_value (dict)': 1,
-        'zodb.py3migrate.tests.test_migrate.Example.bin_nested_key (dict)': 1,
-        'zodb.py3migrate.tests.test_migrate.Example.bin_nested_val (dict)': 1,
-        'zodb.py3migrate.tests.test_migrate.Example.bin_nested_list (dict)': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.bin_key is dict': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.bin_value is dict': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.bin_nested_key is dict': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.bin_nested_val is dict': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.bin_nested_list is dict': 1
     } == result
     assert {} == errors
 
@@ -179,8 +179,8 @@ def test_migrate__analyze_storage__7(zodb_storage, zodb_root):
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
-        "BTrees.OOBTree.OOBTree['key'] (string)": 1,
-        "BTrees.OOBTree.OOBTree['stuff'] (iterable)": 1,
+        "BTrees.OOBTree.OOBTree['key'] is string": 1,
+        "BTrees.OOBTree.OOBTree['stuff'] is iterable": 1,
     } == result
     assert {} == errors
 
@@ -193,8 +193,8 @@ def test_migrate__analyze_storage__8(zodb_storage, zodb_root):
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
-        u"BTrees.OOBTree.OOTreeSet['b\\xc3\\xafn\\xc3\\xa4ry'] (key)": 1,
-        u"BTrees.OOBTree.OOTreeSet[('\\xc3\\xa4', '\\xc3\\xa7')] (key)": 1,
+        u"BTrees.OOBTree.OOTreeSet['b\\xc3\\xafn\\xc3\\xa4ry'] is key": 1,
+        u"BTrees.OOBTree.OOTreeSet[('\\xc3\\xa4', '\\xc3\\xa7')] is key": 1,
     } == result
     assert {} == errors
 
@@ -208,8 +208,8 @@ def test_migrate__analyze_storage__8_5(zodb_storage, zodb_root):
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
-        "persistent.mapping.PersistentMapping['key'] (string)": 1,
-        "persistent.mapping.PersistentMapping['stuff'] (iterable)": 1,
+        "persistent.mapping.PersistentMapping['key'] is string": 1,
+        "persistent.mapping.PersistentMapping['stuff'] is iterable": 1,
     } == result
     assert {} == errors
 
@@ -223,8 +223,8 @@ def test_migrate__analyze_storage__8_6(zodb_storage, zodb_root):
     transaction.commit()
     result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
-        "persistent.list.PersistentList[0] (string)": 1,
-        "persistent.list.PersistentList[2] (iterable)": 1,
+        "persistent.list.PersistentList[0] is string": 1,
+        "persistent.list.PersistentList[2] is iterable": 1,
     } == result
     assert {} == errors
 
@@ -253,7 +253,7 @@ def test_migrate__analyze_storage__10(zodb_storage, zodb_root):
         zodb_storage, verbose=True)
     assert {
         "zodb.py3migrate.tests.test_migrate.Example.data "
-        "(iterable: [0, 'l\\xc3\\xb6ng string contai)": 1,
+        "is iterable: [0, 'l\\xc3\\xb6ng string contai": 1,
     } == result
     assert {} == errors
 

@@ -155,7 +155,7 @@ def get_format_string(obj, display_type=False, verbose=False):
         format_string = '{klassname}.{key}'
 
     if display_type:
-        format_string += ' ({type_}%s)' % (
+        format_string += ' is {type_}%s' % (
             ': {value!r:.30}' if verbose else '')
 
     return format_string
