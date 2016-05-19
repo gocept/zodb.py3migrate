@@ -14,6 +14,7 @@ import logging
 import pdb  # noqa
 import persistent
 import pkg_resources
+import transaction
 import zodbpickle
 
 
@@ -243,6 +244,7 @@ def read_mapping(config_path):
 
 def analyze(storage, verbose=False):
     """Analyse a whole file storage and print out the results."""
+    transaction.doom()
     print_results(
         *analyze_storage(storage, verbose=verbose),
         verb='Found', verbose=verbose)
