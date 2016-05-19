@@ -29,13 +29,15 @@ def wake_object(obj):
         log.error('POSKeyError: %s', e)
 
 
-def is_btree(obj):
+def is_container(obj):
     return isinstance(obj, (
         BTrees.IOBTree.IOBTree,
         BTrees.LOBTree.LOBTree,
         BTrees.OIBTree.OIBTree,
         BTrees.OLBTree.OLBTree,
-        BTrees.OOBTree.OOBTree))
+        BTrees.OOBTree.OOBTree,
+        persistent.mapping.PersistentMapping,
+        persistent.list.PersistentList))
 
 
 def is_treeset(obj):
@@ -55,13 +57,15 @@ def get_data(obj):
 
     """
     result = None
-    try:
-        result = vars(obj)
-    except TypeError:
-        if is_treeset(obj):
-            result = dict.fromkeys(obj.keys())
-        if is_btree(obj):
-            result = obj
+    if is_container(obj):
+        result = obj
+    elif is_treeset(obj):
+        result = dict.fromkeys(obj.keys())
+    else:
+        try:
+            result = vars(obj)
+        except TypeError:
+            pass
     return result
 
 
@@ -95,6 +99,15 @@ def get_classname(obj):
     return obj.__class__.__module__ + '.' + obj.__class__.__name__
 
 
+def get_items(obj):
+    """Get the items of a dict-like or list-like object."""
+    if hasattr(obj, 'items'):
+        items = obj.items()
+    else:
+        items = enumerate(obj)
+    return items
+
+
 def find_obj_with_binary_content(storage, errors, watermark=10000):
     db = DB(storage)
     connection = db.open()
@@ -117,7 +130,7 @@ def find_obj_with_binary_content(storage, errors, watermark=10000):
             errors[klassname] += 1
             continue
 
-        for key, value in data.items():
+        for key, value in get_items(data):
             try:
                 type_ = find_binary(value)
                 if type_ is not None:
@@ -136,7 +149,7 @@ def find_obj_with_binary_content(storage, errors, watermark=10000):
 
 def get_format_string(obj, display_type=False, verbose=False):
     format_string = ''
-    if is_treeset(obj) or is_btree(obj):
+    if is_treeset(obj) or is_container(obj):
         format_string = '{klassname}[{key!r}]'
     else:
         format_string = '{klassname}.{key}'

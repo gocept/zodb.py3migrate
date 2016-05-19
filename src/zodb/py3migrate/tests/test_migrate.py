@@ -1,11 +1,12 @@
 # encoding: utf-8
-
 from ..migrate import print_results, analyze, convert, convert_storage
 import BTrees.IIBTree
 import BTrees.OOBTree
 import ZODB.POSException
 import mock
 import persistent
+import persistent.list
+import persistent.mapping
 import pkg_resources
 import pytest
 import transaction
@@ -198,6 +199,36 @@ def test_migrate__parse__8(zodb_storage, zodb_root):
     assert {} == errors
 
 
+def test_migrate__parse__8_5(zodb_storage, zodb_root):
+    """It analyzes the contents of a `PersistentMapping`."""
+    zodb_root['map'] = persistent.mapping.PersistentMapping()
+    zodb_root['map']['key'] = b'bïnäry'
+    zodb_root['map']['stuff'] = [{'këy': b'binäry'}]
+    zodb_root['map']['iter'] = [u'unicode_string']
+    transaction.commit()
+    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    assert {
+        "persistent.mapping.PersistentMapping['key'] (string)": 1,
+        "persistent.mapping.PersistentMapping['stuff'] (iterable)": 1,
+    } == result
+    assert {} == errors
+
+
+def test_migrate__parse__8_6(zodb_storage, zodb_root):
+    """It analyzes the contents of a `PersistentList`."""
+    zodb_root['map'] = persistent.list.PersistentList()
+    zodb_root['map'].append(b'bïnäry')
+    zodb_root['map'].append([u'unicode_string'])
+    zodb_root['map'].append([{'këy': b'binäry'}])
+    transaction.commit()
+    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    assert {
+        "persistent.list.PersistentList[0] (string)": 1,
+        "persistent.list.PersistentList[2] (iterable)": 1,
+    } == result
+    assert {} == errors
+
+
 def test_migrate__parse__9(zodb_storage, zodb_root, caplog):
     """It skips objects that cannot be parsed.
 
@@ -291,6 +322,7 @@ foo.bar.Baz.title
 
 [latin-1]
 foo.bar.Baz.legacy
+BTrees.OOBTree.OOBTree['7b6d22fa-594e']
 """)
     mapping = zodb.py3migrate.migrate.read_mapping(str(file))
     assert {
@@ -298,6 +330,7 @@ foo.bar.Baz.legacy
         'foo.bar.Baz.text': 'utf-8',
         'foo.bar.Baz.title': 'utf-8',
         'foo.bar.Baz.legacy': 'latin-1',
+        "BTrees.OOBTree.OOBTree['7b6d22fa-594e']": 'latin-1',
     } == mapping
 
 
@@ -397,3 +430,37 @@ def test_migrate__convert_storage_5(zodb_storage, zodb_root):
     assert {} == errors
     sync_zodb_connection(zodb_root)
     assert u'bïnäry' == zodb_root['tree']['key']
+
+
+def test_migrate__convert_storage_6(zodb_storage, zodb_root):
+    """It converts values of a PersistentMapping."""
+    zodb_root['map'] = persistent.mapping.PersistentMapping()
+    zodb_root['map']['key'] = b'bïnäry'
+    transaction.commit()
+    mapping = {
+        "persistent.mapping.PersistentMapping['key']": 'utf-8',
+    }
+    result, errors = convert_storage(zodb_storage, mapping)
+    assert {
+        "persistent.mapping.PersistentMapping['key']": 1,
+    } == result
+    assert {} == errors
+    sync_zodb_connection(zodb_root)
+    assert u'bïnäry' == zodb_root['map']['key']
+
+
+def test_migrate__convert_storage_7(zodb_storage, zodb_root):
+    """It converts values of a PersistentList."""
+    zodb_root['list'] = persistent.list.PersistentList()
+    zodb_root['list'].extend([u'unicöde', b'bïnäry'])
+    transaction.commit()
+    mapping = {
+        "persistent.list.PersistentList[1]": 'utf-8',
+    }
+    result, errors = convert_storage(zodb_storage, mapping)
+    assert {
+        "persistent.list.PersistentList[1]": 1,
+    } == result
+    assert {} == errors
+    sync_zodb_connection(zodb_root)
+    assert [u'unicöde', u'bïnäry'] == zodb_root['list']

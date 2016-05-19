@@ -67,19 +67,31 @@ Upgrade workflow
          foo.bar.Baz.text
          foo.bar.Baz.title
          BTrees.OOBTree.OOBTree['7b6d22fa-594e']
+         persistent.mapping.PersistentMapping['number-1']
 
          [latin-1]
          foo.bar.Baz.legacy
+         persistent.list.PersistentList[1]
 
    * All entries of the section ``[zodbpickle.binary]`` will be wrapped into
      ``zodbpickle.binary``, whereas all entries of other sections will be
      decoded to unicode using the section name as encoding.
 
-   * To convert the value of a ``BTree``, the ``repr`` of the key must be given
-     in square brackets (see example above for ``BTrees.OOBTree.OOBTree``.)
+   * To convert a value in a ``BTree`` or in a ``PersistentMapping``, the
+     ``repr`` of the key must be given in square brackets. (See example above.)
 
-   * .. note:: The conversion only changes values, but not keys, since this
-               would break the application code.
+   * To convert a value in a ``PersistentList``, the
+     index of the value must be given in square brackets. (See example above.)
+
+   * .. note::
+               * The conversion only changes values, but not keys, since this
+                 would break the application code.
+
+               * Converting values in a ``BTree.*.*TreeSet`` is not (yet)
+                 supported.
+
+               * Converting values nested in non-persistent objects is not
+                 supported.
 
 #. Call ``bin/zodb-py3migrate-magic path/to/Data.fs Python3`` to convert the
    magic bytes of the database file to claim Python 3 compatibility. (Use
