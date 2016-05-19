@@ -15,6 +15,7 @@ import zodbpickle
 
 
 def sync_zodb_connection(obj):
+    """Sync changes done in another connection to currently used one."""
     transaction.commit()
     obj._p_jar.invalidateCache()
     obj._p_jar.sync()
