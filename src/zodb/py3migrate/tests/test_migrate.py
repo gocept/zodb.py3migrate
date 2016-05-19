@@ -87,6 +87,21 @@ def test_migrate__find_obj_with_binary_content__1(zodb_storage, caplog):
         '1 of about 1 objects analyzed.' == caplog.records()[-1].getMessage())
 
 
+def test_migrate__wake_object__1(caplog):
+    """It logs POSKeyErrors.
+
+    They occur e. g. if the file for a blob is not on the hard disk.
+    """
+    class Sleepy(object):
+
+        def __getattr__(self, key):
+            raise ZODB.POSException.POSKeyError('\x00')
+
+    zodb.py3migrate.migrate.wake_object(Sleepy())
+    rec = caplog.records()[-1]
+    assert "POSKeyError: '\\x00'" == rec.getMessage()
+
+
 def test_migrate__parse__1(zodb_storage, zodb_root):
     """It parses storage and returns result of analysis."""
     zodb_root['obj'] = Example(
@@ -110,18 +125,6 @@ def test_migrate__parse__2(zodb_storage, zodb_root):
     assert {
         'BTrees.IIBTree.IIBTree': 1
     } == errors
-
-
-def test_migrate__parse__3(zodb_storage, caplog):
-    """It logs POSKeyErrors.
-
-    They occur e. g. if the file for a blob is not on the hard disk.
-    """
-    with mock.patch('zodb.py3migrate.migrate.wake_object',
-                    side_effect=ZODB.POSException.POSKeyError('\x00')):
-        zodb.py3migrate.migrate.parse(zodb_storage)
-    rec = caplog.records()[-1]
-    assert "POSKeyError: '\\x00'" == rec.getMessage()
 
 
 def test_migrate__parse__4(zodb_storage, zodb_root):
@@ -195,13 +198,15 @@ def test_migrate__parse__8(zodb_storage, zodb_root):
     assert {} == errors
 
 
-def test_migrate__parse__9(zodb_storage, caplog):
+def test_migrate__parse__9(zodb_storage, zodb_root, caplog):
     """It skips objects that cannot be parsed.
 
     If the application code setup is incomplete, e.g. ZCML was not setup, some
     code might not work as intended.
 
     """
+    zodb_root['foo'] = b'bär'
+    transaction.commit()
     with mock.patch('zodb.py3migrate.migrate.find_binary',
                     side_effect=RuntimeError):
         result, errors = zodb.py3migrate.migrate.parse(zodb_storage)

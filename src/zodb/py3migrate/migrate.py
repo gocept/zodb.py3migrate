@@ -22,7 +22,11 @@ log = logging.getLogger(__name__)
 
 def wake_object(obj):
     """Wake the object so its `__dict__` gets filled."""
-    getattr(obj, 'some_attribute', None)
+    try:
+        getattr(obj, 'some_attribute', None)
+    except ZODB.POSException.POSKeyError as e:
+        # For example if a ZODB Blob was not found.
+        log.error('POSKeyError: %s', e)
 
 
 def is_btree(obj):
@@ -52,11 +56,7 @@ def get_data(obj):
     """
     result = None
     try:
-        wake_object(obj)
         result = vars(obj)
-    except ZODB.POSException.POSKeyError as e:
-        # For example if a ZODB Blob was not found.
-        log.error('POSKeyError: %s', e)
     except TypeError:
         if is_treeset(obj):
             result = dict.fromkeys(obj.keys())
@@ -111,6 +111,7 @@ def find_obj_with_binary_content(storage, errors, watermark=10000):
         obj = connection.get(oid)
         klassname = get_classname(obj)
 
+        wake_object(obj)
         data = get_data(obj)
         if data is None:
             errors[klassname] += 1
