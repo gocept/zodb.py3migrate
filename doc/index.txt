@@ -96,6 +96,9 @@ Upgrade workflow
                * Converting values nested in non-persistent objects is not
                  supported.
 
+   * After converting binary strings to ``zodbpickle.binary``, your
+     application needs the ``zodbpickle`` package as install dependency.
+     Otherwise the converted objects will be broken.
 
 #. Call ``bin/zodb-py3migrate-magic path/to/Data.fs Python3`` to convert the
    magic bytes of the database file to claim Python 3 compatibility. (Use
