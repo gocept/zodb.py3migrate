@@ -187,9 +187,8 @@ def print_results(result, errors, verbose):
         print "{} ({})".format(key, value)
 
 
-def analyze(zodb_path, blob_dir=None, verbose=False):
+def analyze(storage, verbose=False):
     """Analyse a whole file storage and print out the results."""
-    storage = ZODB.FileStorage.FileStorage(zodb_path, blob_dir=blob_dir)
     print_results(*parse(storage, verbose=verbose), verbose=verbose)
 
 
@@ -217,7 +216,9 @@ def main(args=None):
         '--pdb', action='store_true', help='Drop into a debugger on an error')
     args = parser.parse_args(args)
     try:
-        analyze(args.zodb_path, args.blob_dir, args.verbose)
+        storage = ZODB.FileStorage.FileStorage(
+            args.zodb_path, blob_dir=args.blob_dir)
+        analyze(storage, args.verbose)
     except:
         if args.pdb:
             pdb.post_mortem()

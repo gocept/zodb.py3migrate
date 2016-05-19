@@ -22,29 +22,43 @@ class Example(persistent.Persistent):
 
 
 def test_migrate__main__1():
-    """It calls migrate with given file."""
-    with mock.patch('zodb.py3migrate.migrate.analyze') as analyze:
-        path = pkg_resources.resource_filename('zodb.py3migrate', 'migrate.py')
-        zodb.py3migrate.migrate.main([path])
-        analyze.assert_called_once_with(path, None, False)
+    """It calls `migrate` with given file."""
+    with mock.patch('ZODB.FileStorage.FileStorage') as filestorage:
+        with mock.patch('zodb.py3migrate.migrate.analyze') as analyze:
+            zodb.py3migrate.migrate.main(['path/to/Data.fs'])
+            filestorage.assert_called_once_with(
+                'path/to/Data.fs', blob_dir=None)
+            analyze.assert_called_once_with(filestorage(), False)
+
+
+def test_migrate__main__1_5():
+    """It opens `FileStorage` with blob_dir if path was given."""
+    with mock.patch('ZODB.FileStorage.FileStorage') as filestorage:
+        with mock.patch('zodb.py3migrate.migrate.analyze'):
+            zodb.py3migrate.migrate.main(
+                ['path/to/Data.fs', '--blob-dir', 'path/to/blob_dir'])
+            filestorage.assert_called_once_with(
+                'path/to/Data.fs', blob_dir='path/to/blob_dir')
 
 
 def test_migrate__main__2():
     """It returns the exception if one occurred."""
-    with mock.patch('zodb.py3migrate.migrate.analyze') as analyze:
-            analyze.side_effect = RuntimeError
-            with pytest.raises(RuntimeError):
-                zodb.py3migrate.migrate.main(['path/to/Data.fs'])
+    with mock.patch('ZODB.FileStorage.FileStorage'):
+        with mock.patch('zodb.py3migrate.migrate.analyze') as analyze:
+                analyze.side_effect = RuntimeError
+                with pytest.raises(RuntimeError):
+                    zodb.py3migrate.migrate.main(['path/to/Data.fs'])
 
 
 def test_migrate__main__3():
     """It drops into pdb if there was an exception and `--pdb` is set."""
-    with mock.patch('zodb.py3migrate.migrate.analyze') as analyze:
-        with mock.patch('pdb.post_mortem') as post_mortem:
-            analyze.side_effect = RuntimeError
-            with pytest.raises(RuntimeError):
-                zodb.py3migrate.migrate.main(['path/to/Data.fs', '--pdb'])
-            post_mortem.assert_called_once()
+    with mock.patch('ZODB.FileStorage.FileStorage'):
+        with mock.patch('zodb.py3migrate.migrate.analyze') as analyze:
+            with mock.patch('pdb.post_mortem') as post_mortem:
+                analyze.side_effect = RuntimeError
+                with pytest.raises(RuntimeError):
+                    zodb.py3migrate.migrate.main(['path/to/Data.fs', '--pdb'])
+                post_mortem.assert_called_once()
 
 
 def test_migrate__find_obj_with_binary_content__1(zodb_storage, caplog):
@@ -225,8 +239,6 @@ foo.Bar.baz (3)
 
 def test_migrate__analyze__1(zodb_storage, capsys):
     """It runs the whole analysis for a path of a storage."""
-    zodb_storage.close()
-    path = zodb_storage._file_name
-    analyze(path)
+    analyze(zodb_storage)
     out, err = capsys.readouterr()
     assert 'Found 0 binary fields: (number of occurrences)\n' == out
