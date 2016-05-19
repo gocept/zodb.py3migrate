@@ -378,7 +378,7 @@ def test_migrate__convert_storage__4(zodb_storage, zodb_root):
 
 
 def test_migrate__convert_storage_5(zodb_storage, zodb_root):
-    """"""
+    """It converts values of a BTree if mapping was given using [repr(key)]."""
     zodb_root['tree'] = BTrees.OOBTree.OOBTree()
     zodb_root['tree']['key'] = b'bïnäry'
     transaction.commit()
