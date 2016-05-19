@@ -24,43 +24,44 @@ def wake_object(obj):
     getattr(obj, 'some_attribute', None)
 
 
+def is_btree(obj):
+    return isinstance(obj, (
+        BTrees.IOBTree.IOBTree,
+        BTrees.LOBTree.LOBTree,
+        BTrees.OIBTree.OIBTree,
+        BTrees.OLBTree.OLBTree,
+        BTrees.OOBTree.OOBTree))
+
+
+def is_treeset(obj):
+    return isinstance(obj, (
+        BTrees.IOBTree.IOTreeSet,
+        BTrees.LOBTree.LOTreeSet,
+        BTrees.OIBTree.OITreeSet,
+        BTrees.OLBTree.OLTreeSet,
+        BTrees.OOBTree.OOTreeSet))
+
+
 def get_data(obj):
-    """Return data of object and format string. Return `None` if not possible.
+    """Return data of object. Return `None` if not possible.
 
     We try to fetch data by reading __dict__, but this is not possible for
     `BTree`s. Call `keys` or `items` on obj respectively.
 
-    We use format_string to make clear that binary strings were either found as
-    an attribute of obj or as an item contained in a `BTree`.
-
     """
+    result = None
     try:
         wake_object(obj)
+        result = vars(obj)
     except ZODB.POSException.POSKeyError as e:
         # For example if a ZODB Blob was not found.
         log.error('POSKeyError: %s', e)
-        return None, ''
-
-    try:
-        return vars(obj), '{klassname}.{key} ({type_}'
     except TypeError:
-        result = None
-        format_string = '{klassname}[{key!r}] ({type_}'
-        if isinstance(obj, (
-                BTrees.IOBTree.IOTreeSet,
-                BTrees.LOBTree.LOTreeSet,
-                BTrees.OIBTree.OITreeSet,
-                BTrees.OLBTree.OLTreeSet,
-                BTrees.OOBTree.OOTreeSet)):
+        if is_treeset(obj):
             result = dict.fromkeys(obj.keys())
-        if isinstance(obj, (
-                BTrees.IOBTree.IOBTree,
-                BTrees.LOBTree.LOBTree,
-                BTrees.OIBTree.OIBTree,
-                BTrees.OLBTree.OLBTree,
-                BTrees.OOBTree.OOBTree)):
+        if is_btree(obj):
             result = obj
-        return result, format_string
+    return result
 
 
 def find_binary(value):
@@ -93,21 +94,10 @@ def get_classname(obj):
     return obj.__class__.__module__ + '.' + obj.__class__.__name__
 
 
-def parse(storage, watermark=10000, verbose=False):
-    """Parse a file storage.
-
-    Returns a tuple `(result, errors)`
-    Where
-      `result` is a dict mapping a dotted name of an attribute to the
-        number of occurrences in the storage and
-      `errors` is a dict mapping a dotted name of a class those instances have
-        no `__dict__` to the number of occurrences.
-    """
+def find_obj_with_binary_content(storage, errors, watermark=10000):
     db = DB(storage)
     connection = db.open()
     next = None
-    result = collections.defaultdict(int)
-    errors = collections.defaultdict(int)
     len_storage = len(storage)
     log.warn('Analyzing about %s objects.', len_storage)
     count = 0
@@ -120,11 +110,7 @@ def parse(storage, watermark=10000, verbose=False):
         obj = connection.get(oid)
         klassname = get_classname(obj)
 
-        data, format_string = get_data(obj)
-        if verbose:
-            format_string += ': {value!r:.30})'
-        else:
-            format_string += ')'
+        data = get_data(obj)
         if data is None:
             errors[klassname] += 1
             continue
@@ -133,12 +119,11 @@ def parse(storage, watermark=10000, verbose=False):
             try:
                 type_ = find_binary(value)
                 if type_ is not None:
-                    result[format_string.format(**locals())] += 1
+                    yield obj, data, key, value, type_
                 type_ = find_binary(key)
                 if type_ is not None:
                     type_ = 'key'
-                    value = key
-                    result[format_string.format(**locals())] += 1
+                    yield obj, data, key, value, type_
             except:
                 log.error('Could not execute %r', value, exc_info=True)
                 continue
@@ -146,6 +131,42 @@ def parse(storage, watermark=10000, verbose=False):
         count += 1
         if count % watermark == 0:
             log.warn('%s of about %s objects analyzed.', count, len_storage)
+
+
+def get_format_string(obj, verbose):
+    format_string = ''
+    if is_treeset(obj) or is_btree(obj):
+        format_string = '{klassname}[{key!r}] ({type_}'
+    else:
+        format_string = '{klassname}.{key} ({type_}'
+
+    if verbose:
+        format_string += ': {value!r:.30})'
+    else:
+        format_string += ')'
+
+    return format_string
+
+
+def parse(storage, verbose=False):
+    """Parse a file storage.
+
+    Returns a tuple `(result, errors)`
+    Where
+      `result` is a dict mapping a dotted name of an attribute to the
+        number of occurrences in the storage and
+      `errors` is a dict mapping a dotted name of a class those instances have
+        no `__dict__` to the number of occurrences.
+    """
+    result = collections.defaultdict(int)
+    errors = collections.defaultdict(int)
+    for obj, data, key, value, type_ in find_obj_with_binary_content(
+            storage, errors):
+        klassname = get_classname(obj)
+        format_string = get_format_string(obj, verbose)
+        if type_ == 'key':
+            value = key
+        result[format_string.format(**locals())] += 1
 
     return result, errors
 

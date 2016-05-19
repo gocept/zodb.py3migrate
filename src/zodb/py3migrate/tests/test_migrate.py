@@ -47,6 +47,14 @@ def test_migrate__main__3():
             post_mortem.assert_called_once()
 
 
+def test_migrate__find_obj_with_binary_content__1(zodb_storage, caplog):
+    """It logs progress every `watermark` objects."""
+    list(zodb.py3migrate.migrate.find_obj_with_binary_content(
+        zodb_storage, {}, watermark=1))
+    assert (
+        '1 of about 1 objects analyzed.' == caplog.records()[-1].getMessage())
+
+
 def test_migrate__parse__1(zodb_storage, zodb_root):
     """It parses storage and returns result of analysis."""
     zodb_root['obj'] = Example(
@@ -54,7 +62,7 @@ def test_migrate__parse__1(zodb_storage, zodb_root):
         unicode_string=u'föö',
         reference=Example(binary_string=b'bär', unicode_string=u'bümm'))
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage, watermark=1)
+    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
     assert {
         'zodb.py3migrate.tests.test_migrate.Example.binary_string (string)': 2
     } == result
