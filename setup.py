@@ -19,6 +19,7 @@ setup(
     install_requires=[
         'ZODB3',
         'setuptools',
+        'zodbpickle',
     ],
 
     extras_require={

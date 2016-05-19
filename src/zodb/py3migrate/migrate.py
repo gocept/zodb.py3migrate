@@ -13,6 +13,7 @@ import logging
 import pdb  # noqa
 import persistent
 import pkg_resources
+import zodbpickle
 
 
 log = logging.getLogger(__name__)
@@ -66,6 +67,9 @@ def find_binary(value):
     """Return type if value is or contains binary strings. None otherwise."""
     if isinstance(value, persistent.Persistent):
         # Avoid duplicate analysis of the same object and circular references
+        return None
+    if isinstance(value, zodbpickle.binary):
+        # Already marked as binary, skip.
         return None
     if isinstance(value, str):
         try:

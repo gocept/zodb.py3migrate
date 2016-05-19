@@ -10,6 +10,7 @@ import pkg_resources
 import pytest
 import transaction
 import zodb.py3migrate.migrate
+import zodbpickle
 
 
 class Example(persistent.Persistent):
@@ -177,6 +178,15 @@ def test_migrate__parse__10(zodb_storage, zodb_root):
         "zodb.py3migrate.tests.test_migrate.Example.data "
         "(iterable: [0, 'l\\xc3\\xb6ng string contai)": 1,
     } == result
+    assert {} == errors
+
+
+def test_migrate__parse__11(zodb_storage, zodb_root):
+    """It ignores binary strings that are marked with `zodbpickle.binary`."""
+    zodb_root['obj'] = Example(data=zodbpickle.binary(b'bïnäry'))
+    transaction.commit()
+    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    assert {} == result
     assert {} == errors
 
 
