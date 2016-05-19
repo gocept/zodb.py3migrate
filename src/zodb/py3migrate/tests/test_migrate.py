@@ -361,3 +361,17 @@ def test_migrate__convert_storage__3(zodb_storage, zodb_root):
     assert isinstance(zodb_root['obj'].title, unicode)
     assert u'bïnäry' == zodb_root['obj'].text
     assert isinstance(zodb_root['obj'].text, unicode)
+
+
+def test_migrate__convert_storage__4(zodb_storage, zodb_root):
+    """It does not convert keys that are binary strings."""
+    zodb_root['obj'] = Example(**{b'bïnäry': u'unicode'})
+    transaction.commit()
+    mapping = {
+        'zodb.py3migrate.tests.test_migrate.Example.bïnäry': 'utf-8',
+    }
+    result, errors = convert_storage(zodb_storage, mapping)
+    assert {} == result
+    assert {} == errors
+    sync_zodb_connection(zodb_root)
+    assert u'unicode' == getattr(zodb_root['obj'], b'bïnäry')

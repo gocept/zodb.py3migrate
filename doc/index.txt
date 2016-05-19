@@ -74,6 +74,9 @@ Upgrade workflow
      ``zodbpickle.binary``, whereas all entries of other sections will be
      decoded to unicode using the section name as encoding.
 
+   * .. note:: The conversion only changes values, but not keys, since this
+               would break the application code.
+
 #. Call ``bin/zodb-py3migrate-magic path/to/Data.fs Python3`` to convert the
    magic bytes of the database file to claim Python 3 compatibility. (Use
    ``Python2`` to revert back to Python 2.)

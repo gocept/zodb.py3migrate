@@ -123,8 +123,7 @@ def find_obj_with_binary_content(storage, errors, watermark=10000):
                     yield obj, data, key, value, type_
                 type_ = find_binary(key)
                 if type_ is not None:
-                    type_ = 'key'
-                    yield obj, data, key, value, type_
+                    yield obj, data, key, key, 'key'
             except:
                 log.error('Could not execute %r', value, exc_info=True)
                 continue
@@ -165,8 +164,6 @@ def parse(storage, verbose=False):
             storage, errors):
         klassname = get_classname(obj)
         format_string = get_format_string(obj, verbose)
-        if type_ == 'key':
-            value = key
         result[format_string.format(**locals())] += 1
 
     return result, errors
@@ -197,7 +194,7 @@ def convert_storage(storage, mapping, verbose=False):
         klassname = get_classname(obj)
         dotted_name = '{}.{}'.format(klassname, key)
         encoding = mapping.get(dotted_name, None)
-        if encoding is None:
+        if encoding is None or type_ == 'key':
             continue
 
         if encoding == 'zodbpickle.binary':
