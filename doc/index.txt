@@ -110,10 +110,10 @@ Example call
 .. code-block:: none
 
     $ bin/zodb-py3migrate path/to/Data.fs
-    Found 3 binary fields, including how often they occurred.
-      foo.bar.Baz.image (string) (12)
-      foo.bar.Baz.legacy (iterable) (1)
-      foo.bar.Baz.text (string) (23)
+    Found 3 binary fields: (number of occurrences)
+      foo.bar.Baz.image is string (12)
+      foo.bar.Baz.legacy is iterable (1)
+      foo.bar.Baz.text is string (23)
 
 .. toctree::
     :maxdepth: 2
