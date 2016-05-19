@@ -103,54 +103,54 @@ def test_migrate__wake_object__1(caplog):
     assert "POSKeyError: '\\x00'" == rec.getMessage()
 
 
-def test_migrate__parse__1(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__1(zodb_storage, zodb_root):
     """It parses storage and returns result of analysis."""
     zodb_root['obj'] = Example(
         binary_string=b'bär',
         unicode_string=u'föö',
         reference=Example(binary_string=b'bär', unicode_string=u'bümm'))
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
         'zodb.py3migrate.tests.test_migrate.Example.binary_string (string)': 2
     } == result
     assert {} == errors
 
 
-def test_migrate__parse__2(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__2(zodb_storage, zodb_root):
     """It returns objects without a dict as errors."""
     zodb_root['tree'] = BTrees.IIBTree.IIBTree()
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {} == result
     assert {
         'BTrees.IIBTree.IIBTree': 1
     } == errors
 
 
-def test_migrate__parse__4(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__4(zodb_storage, zodb_root):
     """It counts iterable fields that contain binary strings."""
     zodb_root['obj'] = Example(data=['bïnäry', 'anöther_binäry'])
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
         'zodb.py3migrate.tests.test_migrate.Example.data (iterable)': 1,
     } == result
     assert {} == errors
 
 
-def test_migrate__parse__5(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__5(zodb_storage, zodb_root):
     """It counts iterable fields that contain iterables with binary strings."""
     zodb_root['obj'] = Example(data=[0, [1, [2, [3, b'binärÿ']]]])
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
         'zodb.py3migrate.tests.test_migrate.Example.data (iterable)': 1,
     } == result
     assert {} == errors
 
 
-def test_migrate__parse__6(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__6(zodb_storage, zodb_root):
     """It counts dictionaries that contain binary strings in key or value."""
     zodb_root['0'] = Example(data={u'unïcode_key': u'unïcode_value'})
     zodb_root['1'] = Example(bin_key={b'binäry_key': u'unïcode_value'})
@@ -159,7 +159,7 @@ def test_migrate__parse__6(zodb_storage, zodb_root):
     zodb_root['4'] = Example(bin_nested_val={u'këy': {u'këy': b'bïn_val'}})
     zodb_root['5'] = Example(bin_nested_list={u'këy': [0, [1, b'bïnary']]})
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
         'zodb.py3migrate.tests.test_migrate.Example.bin_key (dict)': 1,
         'zodb.py3migrate.tests.test_migrate.Example.bin_value (dict)': 1,
@@ -170,14 +170,14 @@ def test_migrate__parse__6(zodb_storage, zodb_root):
     assert {} == errors
 
 
-def test_migrate__parse__7(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__7(zodb_storage, zodb_root):
     """It analyzes contents of `BTree`s."""
     zodb_root['tree'] = BTrees.OOBTree.OOBTree()
     zodb_root['tree']['key'] = b'bïnäry'
     zodb_root['tree']['stuff'] = [{'këy': b'binäry'}]
     zodb_root['tree']['iter'] = [u'unicode_string']
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
         "BTrees.OOBTree.OOBTree['key'] (string)": 1,
         "BTrees.OOBTree.OOBTree['stuff'] (iterable)": 1,
@@ -185,13 +185,13 @@ def test_migrate__parse__7(zodb_storage, zodb_root):
     assert {} == errors
 
 
-def test_migrate__parse__8(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__8(zodb_storage, zodb_root):
     """It analyzes contents of `BTreeSet`s."""
     zodb_root['set'] = BTrees.OOBTree.OOTreeSet()
     zodb_root['set'].insert(b'bïnäry')
     zodb_root['set'].insert((b'ä', b'ç',))
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
         u"BTrees.OOBTree.OOTreeSet['b\\xc3\\xafn\\xc3\\xa4ry'] (key)": 1,
         u"BTrees.OOBTree.OOTreeSet[('\\xc3\\xa4', '\\xc3\\xa7')] (key)": 1,
@@ -199,14 +199,14 @@ def test_migrate__parse__8(zodb_storage, zodb_root):
     assert {} == errors
 
 
-def test_migrate__parse__8_5(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__8_5(zodb_storage, zodb_root):
     """It analyzes the contents of a `PersistentMapping`."""
     zodb_root['map'] = persistent.mapping.PersistentMapping()
     zodb_root['map']['key'] = b'bïnäry'
     zodb_root['map']['stuff'] = [{'këy': b'binäry'}]
     zodb_root['map']['iter'] = [u'unicode_string']
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
         "persistent.mapping.PersistentMapping['key'] (string)": 1,
         "persistent.mapping.PersistentMapping['stuff'] (iterable)": 1,
@@ -214,14 +214,14 @@ def test_migrate__parse__8_5(zodb_storage, zodb_root):
     assert {} == errors
 
 
-def test_migrate__parse__8_6(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__8_6(zodb_storage, zodb_root):
     """It analyzes the contents of a `PersistentList`."""
     zodb_root['map'] = persistent.list.PersistentList()
     zodb_root['map'].append(b'bïnäry')
     zodb_root['map'].append([u'unicode_string'])
     zodb_root['map'].append([{'këy': b'binäry'}])
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {
         "persistent.list.PersistentList[0] (string)": 1,
         "persistent.list.PersistentList[2] (iterable)": 1,
@@ -229,7 +229,7 @@ def test_migrate__parse__8_6(zodb_storage, zodb_root):
     assert {} == errors
 
 
-def test_migrate__parse__9(zodb_storage, zodb_root, caplog):
+def test_migrate__analyze_storage__9(zodb_storage, zodb_root, caplog):
     """It skips objects that cannot be parsed.
 
     If the application code setup is incomplete, e.g. ZCML was not setup, some
@@ -240,16 +240,17 @@ def test_migrate__parse__9(zodb_storage, zodb_root, caplog):
     transaction.commit()
     with mock.patch('zodb.py3migrate.migrate.find_binary',
                     side_effect=RuntimeError):
-        result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+        result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
         assert caplog.records()[-1].exc_text.endswith('RuntimeError')
 
 
-def test_migrate__parse__10(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__10(zodb_storage, zodb_root):
     """It includes first bytes of the string in result if verbose is true."""
     zodb_root['obj'] = Example(
         data=[0, b'löng string containing an umlaut.'])
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage, verbose=True)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(
+        zodb_storage, verbose=True)
     assert {
         "zodb.py3migrate.tests.test_migrate.Example.data "
         "(iterable: [0, 'l\\xc3\\xb6ng string contai)": 1,
@@ -257,11 +258,11 @@ def test_migrate__parse__10(zodb_storage, zodb_root):
     assert {} == errors
 
 
-def test_migrate__parse__11(zodb_storage, zodb_root):
+def test_migrate__analyze_storage__11(zodb_storage, zodb_root):
     """It ignores binary strings that are marked with `zodbpickle.binary`."""
     zodb_root['obj'] = Example(data=zodbpickle.binary(b'bïnäry'))
     transaction.commit()
-    result, errors = zodb.py3migrate.migrate.parse(zodb_storage)
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {} == result
     assert {} == errors
 

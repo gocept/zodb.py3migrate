@@ -161,8 +161,8 @@ def get_format_string(obj, display_type=False, verbose=False):
     return format_string
 
 
-def parse(storage, verbose=False):
-    """Parse a file storage.
+def analyze_storage(storage, verbose=False):
+    """Analyze a ``FileStorage``.
 
     Returns a tuple `(result, errors)`
     Where
@@ -244,7 +244,7 @@ def read_mapping(config_path):
 def analyze(storage, verbose=False):
     """Analyse a whole file storage and print out the results."""
     print_results(
-        *parse(storage, verbose=verbose),
+        *analyze_storage(storage, verbose=verbose),
         verb='Found', verbose=verbose)
 
 
