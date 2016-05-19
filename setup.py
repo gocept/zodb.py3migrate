@@ -28,6 +28,7 @@ setup(
             'pytest',
             'pytest-capturelog',
             'transaction',
+            'Products.PythonScripts',
         ],
     },
 

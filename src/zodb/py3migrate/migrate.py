@@ -90,9 +90,14 @@ def find_binary(value):
             if find_binary(k) or find_binary(v):
                 return 'dict'
     elif hasattr(value, '__iter__'):
-        for v in value:
-            if find_binary(v):
-                return 'iterable'
+        try:
+            for v in value:
+                if find_binary(v):
+                    return 'iterable'
+        except TypeError:
+            # e. g. <type 'tuple'> has __iter__ but as it is a class it can
+            # not be called successfully.
+            pass
     return None
 
 

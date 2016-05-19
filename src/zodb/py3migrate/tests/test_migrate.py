@@ -2,6 +2,7 @@
 from ..migrate import print_results, analyze, convert, convert_storage
 import BTrees.IIBTree
 import BTrees.OOBTree
+import Products.PythonScripts.PythonScript
 import ZODB.POSException
 import mock
 import persistent
@@ -266,6 +267,22 @@ def test_migrate__analyze_storage__11(zodb_storage, zodb_root):
     result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
     assert {} == result
     assert {} == errors
+
+
+def test_migrate__analyze_storage__12(zodb_storage, zodb_root, caplog):
+    """It does not break on `PythonScript` objects."""
+    zodb_root['ps'] = Products.PythonScripts.PythonScript.PythonScript('ps')
+    zodb_root['ps'].write('print "Hello Python 3!"')
+    transaction.commit()
+    result, errors = zodb.py3migrate.migrate.analyze_storage(zodb_storage)
+    assert {
+        'Products.PythonScripts.PythonScript.PythonScript.'
+        'Python_magic is string': 1,
+        'Products.PythonScripts.PythonScript.PythonScript._code is string': 1
+    } == result
+    assert {} == errors
+    # There is no error message in the log:
+    assert 'Analyzing about 2 objects.' == caplog.records()[-1].getMessage()
 
 
 def test_migrate__print_results__1(capsys):
