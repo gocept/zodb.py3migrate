@@ -17,37 +17,37 @@ There are the following reasons for this behavior:
 Upgrade workflow
 ================
 
-#. You must install `zodb.py3migrate` into your project, so it has access to
-   your persistent classes when resolving ZODB objects.
+#. Install ``zodb.py3migrate`` into your project, so it has access to your
+   persistent classes when resolving ZODB objects.
 
-#. After installing, you can use the entry point `bin/zodb-py3migrate
-   path/to/Data.fs` to run the script.
+#. After installing, you can use the entry point ``bin/zodb-py3migrate
+   path/to/Data.fs`` to run the script.
 
    * The script shows a list of attributes grouped by their class that are
      Python 2 strings, i. e. binary string with an encoding different from
      ASCII. Decide for each attribute if it really is a binary string, i. e.
-     for images, or if it should be text, i. e. `unicode`.
+     for images, or if it should be text, i. e. ``unicode``.
 
    * Attributes that should remain binary strings must become an instance of
-     `zodbpickle.binary` so ZODB knows that this fields should be treated as
+     ``zodbpickle.binary`` so ZODB knows that this fields should be treated as
      binary.
 
    * Since ZODB will read all non-marked binary strings as unicode, you must
-     convert all text fields to `unicode` and adjust the class accordingly.
+     convert all text fields to ``unicode`` and adjust the class accordingly.
 
    * Your ZODB is Python 3 ready if the script does not output any attribute
      anymore, since all binary string were either converted to unicode or
      marked as binary.
 
-   * .. note:: The displayed total number of objects in the `ZODB` is only an
-               approximation as returned by the `FileStorage` API.
+   * .. note:: The displayed total number of objects in the ``ZODB`` is only an
+               approximation as returned by the ``FileStorage`` API.
 
-#. Convert the `Python Script` objects inside the ZODB to be Python 3
-   compatible. (Find all of them using the `Find` tab in the ZMI.)
+#. Convert the ``Python Script`` objects inside the ZODB to be Python 3
+   compatible. (Find all of them using the ``Find`` tab in the ZMI.)
 
-#. Call `bin/zodb-py3migrate-magic path/to/Data.fs Python3` to convert the
+#. Call ``bin/zodb-py3migrate-magic path/to/Data.fs Python3`` to convert the
    magic bytes of the database file to claim Python 3 compatibility. (Use
-   `Python2` to revert back to Python 2.)
+   ``Python2`` to revert back to Python 2.)
 
 Example call
 ============
@@ -68,4 +68,4 @@ Example call
     changes
 
 
-- :ref:`genindex`
+- :ref:``genindex``
