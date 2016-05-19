@@ -36,7 +36,7 @@ Upgrade workflow
      convert all text fields to ``unicode`` and adjust the class accordingly.
 
    * Your ZODB is Python 3 ready if the script does not output any attribute
-     anymore, since all binary string were either converted to unicode or
+     any more, since all binary string were either converted to unicode or
      marked as binary.
 
    * .. note:: The displayed total number of objects in the ``ZODB`` is only an
