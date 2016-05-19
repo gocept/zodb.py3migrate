@@ -14,7 +14,7 @@ def project_path(*names):
 
 setup(
     name='zodb.py3migrate',
-    version='0.1.dev0',
+    version='0.1',
 
     install_requires=[
         'ZODB3',
