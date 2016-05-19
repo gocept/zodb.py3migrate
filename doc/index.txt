@@ -42,8 +42,37 @@ Upgrade workflow
    * .. note:: The displayed total number of objects in the ``ZODB`` is only an
                approximation as returned by the ``FileStorage`` API.
 
+#. Convert binary attributes in code base to Python 3.
+
+   * Mark binary attributes with ``zodbpickle.binary`` to be compatible with
+     Python 2 and Python 3, so you can continue using Python 2 without writing
+     incompatible data.
+
+   * If you only need Python 3 compatibility it is sufficient to use ``bytes``.
+
 #. Convert the ``Python Script`` objects inside the ZODB to be Python 3
    compatible. (Find all of them using the ``Find`` tab in the ZMI.)
+
+#. Convert existing data in the ZODB for Python 3 compatibility by calling
+   ``bin/zodb-py3migrate path/to/Data.fs --config=conversion.ini``.
+
+   * Example for conversion config, i.e. ``conversion.ini`` in call above.
+
+     .. code-block:: pacmanconf
+
+         [zodbpickle.binary]
+         foo.bar.Baz.image
+
+         [utf-8]
+         foo.bar.Baz.text
+         foo.bar.Baz.title
+
+         [latin-1]
+         foo.bar.Baz.legacy
+
+   * All entries of the section ``[zodbpickle.binary]`` will be wrapped into
+     ``zodbpickle.binary``, whereas all entries of other sections will be
+     decoded to unicode using the section name as encoding.
 
 #. Call ``bin/zodb-py3migrate-magic path/to/Data.fs Python3`` to convert the
    magic bytes of the database file to claim Python 3 compatibility. (Use

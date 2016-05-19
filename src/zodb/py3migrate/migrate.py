@@ -4,6 +4,7 @@ import BTrees.LOBTree
 import BTrees.OIBTree
 import BTrees.OLBTree
 import BTrees.OOBTree
+import ConfigParser
 import ZODB.FileStorage
 import ZODB.POSException
 import argparse
@@ -171,7 +172,7 @@ def parse(storage, verbose=False):
     return result, errors
 
 
-def print_results(result, errors, verbose):
+def print_results(result, errors, verb, verbose):
     """Print the analysis results."""
     if verbose:
         print ("Found {} classes whose objects do not have __dict__: "
@@ -181,15 +182,67 @@ def print_results(result, errors, verbose):
         print
         print "# ########################################################### #"
         print
-    print "Found {} binary fields: (number of occurrences)".format(
-        len(result))
+    print "{} {} binary fields: (number of occurrences)".format(
+        verb, len(result))
     for key, value in sorted_by_key(result):
         print "{} ({})".format(key, value)
 
 
+def convert_storage(storage, mapping, verbose=False):
+    """Iterate ZODB objects with binary content and apply mapping."""
+    result = collections.defaultdict(int)
+    errors = collections.defaultdict(int)
+    for obj, data, key, value, type_ in find_obj_with_binary_content(
+            storage, errors):
+        klassname = get_classname(obj)
+        dotted_name = '{}.{}'.format(klassname, key)
+        encoding = mapping.get(dotted_name, None)
+        if encoding is None:
+            continue
+
+        if encoding == 'zodbpickle.binary':
+            data[key] = zodbpickle.binary(value)
+        else:
+            data[key] = value.decode(encoding)
+
+        obj._p_changed = True
+        result[dotted_name] += 1
+
+    return result, errors
+
+
+def read_mapping(config_path):
+    """Create mapping from INI file.
+
+    It maps the section options to the name of their section, thus a
+    configuration like below results in a mapping {'foo.Bar.baz': 'utf-8'}.
+
+    [utf-8]
+    foo.Bar.baz
+
+    """
+    parser = ConfigParser.ConfigParser(allow_no_value=True)
+    parser.optionxform = str  # avoid lower casing of option names
+    parser.read(config_path)
+    mapping = {}
+    for section in parser.sections():
+        mapping.update(dict.fromkeys(parser.options(section), section))
+    return mapping
+
+
 def analyze(storage, verbose=False):
     """Analyse a whole file storage and print out the results."""
-    print_results(*parse(storage, verbose=verbose), verbose=verbose)
+    print_results(
+        *parse(storage, verbose=verbose),
+        verb='Found', verbose=verbose)
+
+
+def convert(storage, config_path, verbose=False):
+    """Convert binary strings according to mapping read from config file."""
+    mapping = read_mapping(config_path)
+    print_results(
+        *convert_storage(storage, mapping, verbose=verbose),
+        verb='Converted', verbose=verbose)
 
 
 def sorted_by_key(dict):
@@ -210,6 +263,8 @@ def main(args=None):
         '-b', '--blob-dir', default=None,
         help='Path to the blob directory if ZODB blobs are used.')
     parser.add_argument(
+        '-c', '--config', help='Path to conversion config file.')
+    parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='Be more verbose in output')
     parser.add_argument(
@@ -218,7 +273,10 @@ def main(args=None):
     try:
         storage = ZODB.FileStorage.FileStorage(
             args.zodb_path, blob_dir=args.blob_dir)
-        analyze(storage, args.verbose)
+        if args.config:
+            convert(storage, args.config, args.verbose)
+        else:
+            analyze(storage, args.verbose)
     except:
         if args.pdb:
             pdb.post_mortem()

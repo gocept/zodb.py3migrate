@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-from ..migrate import print_results, analyze
+from ..migrate import print_results, analyze, convert, convert_storage
 import BTrees.IIBTree
 import BTrees.OOBTree
 import ZODB.POSException
@@ -11,6 +11,12 @@ import pytest
 import transaction
 import zodb.py3migrate.migrate
 import zodbpickle
+
+
+def sync_zodb_connection(obj):
+    transaction.commit()
+    obj._p_jar.invalidateCache()
+    obj._p_jar.sync()
 
 
 class Example(persistent.Persistent):
@@ -59,6 +65,18 @@ def test_migrate__main__3():
                 with pytest.raises(RuntimeError):
                     zodb.py3migrate.migrate.main(['path/to/Data.fs', '--pdb'])
                 post_mortem.assert_called_once()
+
+
+def test_migrate__main__4():
+    """It calls `convert` if `--config` was specified."""
+    with mock.patch('ZODB.FileStorage.FileStorage') as filestorage:
+        with mock.patch('zodb.py3migrate.migrate.convert') as convert:
+            zodb_path = pkg_resources.resource_filename(
+                'zodb.py3migrate', 'migrate.py')
+            config_path = pkg_resources.resource_filename(
+                'zodb.py3migrate', 'conftest.py')
+            zodb.py3migrate.migrate.main([zodb_path, '--config', config_path])
+            convert.assert_called_once_with(filestorage(), config_path, False)
 
 
 def test_migrate__find_obj_with_binary_content__1(zodb_storage, caplog):
@@ -214,7 +232,8 @@ def test_migrate__parse__11(zodb_storage, zodb_root):
 
 def test_migrate__print_results__1(capsys):
     """It prints only the results if `verbose` is `False`."""
-    print_results({'foo.Bar.baz': 3}, {'asdf.Qwe': 2}, verbose=False)
+    print_results(
+        {'foo.Bar.baz': 3}, {'asdf.Qwe': 2}, verb='Found', verbose=False)
     out, err = capsys.readouterr()
     assert '''\
 Found 1 binary fields: (number of occurrences)
@@ -224,7 +243,8 @@ foo.Bar.baz (3)
 
 def test_migrate__print_results__2(capsys):
     """It prints the errors, too if `verbose` is `True`."""
-    print_results({'foo.Bar.baz': 3}, {'asdf.Qwe': 2}, verbose=True)
+    print_results(
+        {'foo.Bar.baz': 3}, {'asdf.Qwe': 2}, verb='Converted', verbose=True)
     out, err = capsys.readouterr()
     assert '''\
 Found 1 classes whose objects do not have __dict__: (number of occurrences)
@@ -232,7 +252,7 @@ asdf.Qwe (2)
 
 # ########################################################### #
 
-Found 1 binary fields: (number of occurrences)
+Converted 1 binary fields: (number of occurrences)
 foo.Bar.baz (3)
 ''' == out
 
@@ -242,3 +262,102 @@ def test_migrate__analyze__1(zodb_storage, capsys):
     analyze(zodb_storage)
     out, err = capsys.readouterr()
     assert 'Found 0 binary fields: (number of occurrences)\n' == out
+
+
+def test_migrate__convert__1(zodb_storage, capsys, tmpdir):
+    """It applys the mapping for all objects of a storage."""
+    file = tmpdir.join('config.ini')
+    file.write('')
+    convert(zodb_storage, str(file))
+    out, err = capsys.readouterr()
+    assert 'Converted 0 binary fields: (number of occurrences)\n' == out
+
+
+def test_migrate__read_mapping__1(tmpdir):
+    """It maps dotted name to encoding according to the given config file."""
+    file = tmpdir.join('config.ini')
+    file.write("""
+[zodbpickle.binary]
+foo.bar.Baz.image
+
+[utf-8]
+foo.bar.Baz.text
+foo.bar.Baz.title
+
+[latin-1]
+foo.bar.Baz.legacy
+""")
+    mapping = zodb.py3migrate.migrate.read_mapping(str(file))
+    assert {
+        'foo.bar.Baz.image': 'zodbpickle.binary',
+        'foo.bar.Baz.text': 'utf-8',
+        'foo.bar.Baz.title': 'utf-8',
+        'foo.bar.Baz.legacy': 'latin-1',
+    } == mapping
+
+
+def test_migrate__convert_storage__1(zodb_storage, zodb_root):
+    """It persists conversion in ZODB."""
+    from ZODB.DB import DB
+    zodb_root['obj'] = Example(img=b'avatär')
+    transaction.commit()
+    mapping = {
+        'zodb.py3migrate.tests.test_migrate.Example.img': 'zodbpickle.binary',
+    }
+    convert_storage(zodb_storage, mapping)
+    transaction.commit()
+
+    path = zodb_storage._file_name
+    zodb_storage.close()
+
+    storage = ZODB.FileStorage.FileStorage(path)
+    db = DB(storage)
+    root = db.open().root()
+    try:
+        assert isinstance(root['obj'].img, zodbpickle.binary)
+    finally:
+        db.close()
+        storage.close()
+
+
+def test_migrate__convert_storage__2(zodb_storage, zodb_root):
+    """It converts only binary strings that appear in the mapping."""
+    zodb_root['obj'] = Example(img=b'avatär', background_image=b'gïf')
+    transaction.commit()
+    mapping = {
+        'zodb.py3migrate.tests.test_migrate.Example.img': 'zodbpickle.binary',
+    }
+    result, errors = convert_storage(zodb_storage, mapping)
+    assert {
+        'zodb.py3migrate.tests.test_migrate.Example.img': 1,
+    } == result
+    assert {} == errors
+
+    sync_zodb_connection(zodb_root)
+    assert b'avatär' == zodb_root['obj'].img
+    assert isinstance(zodb_root['obj'].img, zodbpickle.binary)
+    assert b'gïf' == zodb_root['obj'].background_image
+    assert not isinstance(zodb_root['obj'].background_image, zodbpickle.binary)
+
+
+def test_migrate__convert_storage__3(zodb_storage, zodb_root):
+    """It decodes binary string using encoding given by section name."""
+    zodb_root['obj'] = Example(
+        title=u'bïnäry'.encode('utf-8'), text=u'bïnäry'.encode('latin-1'))
+    transaction.commit()
+    mapping = {
+        'zodb.py3migrate.tests.test_migrate.Example.title': 'utf-8',
+        'zodb.py3migrate.tests.test_migrate.Example.text': 'latin-1',
+    }
+    result, errors = convert_storage(zodb_storage, mapping)
+    assert {
+        'zodb.py3migrate.tests.test_migrate.Example.title': 1,
+        'zodb.py3migrate.tests.test_migrate.Example.text': 1,
+    } == result
+    assert {} == errors
+
+    sync_zodb_connection(zodb_root)
+    assert u'bïnäry' == zodb_root['obj'].title
+    assert isinstance(zodb_root['obj'].title, unicode)
+    assert u'bïnäry' == zodb_root['obj'].text
+    assert isinstance(zodb_root['obj'].text, unicode)
