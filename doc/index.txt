@@ -56,6 +56,9 @@ Upgrade workflow
 #. Convert existing data in the ZODB for Python 3 compatibility by calling
    ``bin/zodb-py3migrate path/to/Data.fs --config=conversion.ini``.
 
+   * .. warning:: This call changes the database file in place, so only call
+                  it on a copy of your live ZODB.
+
    * Example for conversion config, i.e. ``conversion.ini`` in call above.
 
      .. code-block:: pacmanconf
@@ -93,9 +96,13 @@ Upgrade workflow
                * Converting values nested in non-persistent objects is not
                  supported.
 
+
 #. Call ``bin/zodb-py3migrate-magic path/to/Data.fs Python3`` to convert the
    magic bytes of the database file to claim Python 3 compatibility. (Use
    ``Python2`` to revert back to Python 2.)
+
+   * .. warning:: This call changes the database file in place, so only call
+                  it on a copy of your live ZODB.
 
 Example call
 ============
