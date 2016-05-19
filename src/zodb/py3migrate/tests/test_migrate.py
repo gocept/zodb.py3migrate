@@ -375,3 +375,20 @@ def test_migrate__convert_storage__4(zodb_storage, zodb_root):
     assert {} == errors
     sync_zodb_connection(zodb_root)
     assert u'unicode' == getattr(zodb_root['obj'], b'bïnäry')
+
+
+def test_migrate__convert_storage_5(zodb_storage, zodb_root):
+    """"""
+    zodb_root['tree'] = BTrees.OOBTree.OOBTree()
+    zodb_root['tree']['key'] = b'bïnäry'
+    transaction.commit()
+    mapping = {
+        "BTrees.OOBTree.OOBTree['key']": 'utf-8',
+    }
+    result, errors = convert_storage(zodb_storage, mapping)
+    assert {
+        "BTrees.OOBTree.OOBTree['key']": 1,
+    } == result
+    assert {} == errors
+    sync_zodb_connection(zodb_root)
+    assert u'bïnäry' == zodb_root['tree']['key']

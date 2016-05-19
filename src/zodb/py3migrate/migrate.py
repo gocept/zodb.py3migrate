@@ -133,17 +133,16 @@ def find_obj_with_binary_content(storage, errors, watermark=10000):
             log.warn('%s of about %s objects analyzed.', count, len_storage)
 
 
-def get_format_string(obj, verbose):
+def get_format_string(obj, display_type=False, verbose=False):
     format_string = ''
     if is_treeset(obj) or is_btree(obj):
-        format_string = '{klassname}[{key!r}] ({type_}'
+        format_string = '{klassname}[{key!r}]'
     else:
-        format_string = '{klassname}.{key} ({type_}'
+        format_string = '{klassname}.{key}'
 
-    if verbose:
-        format_string += ': {value!r:.30})'
-    else:
-        format_string += ')'
+    if display_type:
+        format_string += ' ({type_}%s)' % (
+            ': {value!r:.30}' if verbose else '')
 
     return format_string
 
@@ -163,7 +162,8 @@ def parse(storage, verbose=False):
     for obj, data, key, value, type_ in find_obj_with_binary_content(
             storage, errors):
         klassname = get_classname(obj)
-        format_string = get_format_string(obj, verbose)
+        format_string = get_format_string(
+            obj, display_type=True, verbose=verbose)
         result[format_string.format(**locals())] += 1
 
     return result, errors
@@ -192,7 +192,7 @@ def convert_storage(storage, mapping, verbose=False):
     for obj, data, key, value, type_ in find_obj_with_binary_content(
             storage, errors):
         klassname = get_classname(obj)
-        dotted_name = '{}.{}'.format(klassname, key)
+        dotted_name = get_format_string(obj).format(**locals())
         encoding = mapping.get(dotted_name, None)
         if encoding is None or type_ == 'key':
             continue

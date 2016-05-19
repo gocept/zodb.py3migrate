@@ -66,6 +66,7 @@ Upgrade workflow
          [utf-8]
          foo.bar.Baz.text
          foo.bar.Baz.title
+         BTrees.OOBTree.OOBTree['7b6d22fa-594e']
 
          [latin-1]
          foo.bar.Baz.legacy
@@ -73,6 +74,9 @@ Upgrade workflow
    * All entries of the section ``[zodbpickle.binary]`` will be wrapped into
      ``zodbpickle.binary``, whereas all entries of other sections will be
      decoded to unicode using the section name as encoding.
+
+   * To convert the value of a ``BTree``, the ``repr`` of the key must be given
+     in square brackets (see example above for ``BTrees.OOBTree.OOBTree``.)
 
    * .. note:: The conversion only changes values, but not keys, since this
                would break the application code.
