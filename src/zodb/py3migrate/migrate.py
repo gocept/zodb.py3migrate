@@ -111,7 +111,7 @@ def get_items(obj):
 
 
 def find_obj_with_binary_content(
-        storage, errors, start_at=None, watermark=10000):
+        storage, errors, start_at=None, limit=None, watermark=10000):
     """Generator which finds objects in `storage` having binary content.
 
     Yields tuple: (object, data, key-name, value, type)
@@ -157,6 +157,8 @@ def find_obj_with_binary_content(
         count += 1
         if count % watermark == 0:
             log.warn('%s of about %s objects analyzed.', count, len_storage)
+        if limit is not None and count >= limit:
+            return
 
 
 def get_format_string(obj, display_type=False, verbose=False):

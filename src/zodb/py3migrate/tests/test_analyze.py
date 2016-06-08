@@ -15,14 +15,16 @@ import zodbpickle
 def test_analyze__main__1(zodb_storage, zodb_root, capsys):
     """It runs an analysis on a given ZODB."""
     zodb_root['obj'] = Example(binary=b'bär1')
+    zodb_root['obj2'] = Example(binary2=b'bär2')
     transaction.commit()
     zodb_storage.close()
 
-    zodb.py3migrate.analyze.main([zodb_storage.getName(), '--start=0x01'])
+    zodb.py3migrate.analyze.main(
+        [zodb_storage.getName(), '--start=0x01', '--limit=1'])
     out, err = capsys.readouterr()
     assert '''\
 Found 1 binary fields: (number of occurrences)
-zodb.py3migrate.testing.Example.binary is string (1)
+zodb.py3migrate.testing.Example.binary2 is string (1)
 ''' == out
     assert '' == err
 

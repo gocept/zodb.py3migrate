@@ -8,7 +8,7 @@ import transaction
 log = logging.getLogger(__name__)
 
 
-def analyze_storage(storage, verbose=False, start_at=None):
+def analyze_storage(storage, verbose=False, start_at=None, limit=None):
     """Analyze a ``FileStorage``.
 
     Returns a tuple `(result, errors)`
@@ -21,7 +21,7 @@ def analyze_storage(storage, verbose=False, start_at=None):
     result = collections.defaultdict(int)
     errors = collections.defaultdict(int)
     for obj, data, key, value, type_ in find_obj_with_binary_content(
-            storage, errors, start_at=start_at):
+            storage, errors, start_at=start_at, limit=limit):
         klassname = get_classname(obj)
         format_string = get_format_string(
             obj, display_type=True, verbose=verbose)
@@ -30,12 +30,12 @@ def analyze_storage(storage, verbose=False, start_at=None):
     return result, errors
 
 
-def analyze(storage, verbose=False, start_at=None):
+def analyze(storage, verbose=False, start_at=None, limit=None):
     """Analyse a whole file storage and print out the results."""
     transaction.doom()
-    print_results(
-        *analyze_storage(storage, verbose=verbose, start_at=start_at),
-        verb='Found', verbose=verbose)
+    results = analyze_storage(
+        storage, verbose=verbose, start_at=start_at, limit=limit)
+    print_results(*results, verb='Found', verbose=verbose)
 
 
 def main(args=None):
@@ -48,4 +48,7 @@ def main(args=None):
         '--start', default=None,
         help='OID to start analysis with. Default: start with first OID in '
         'storage.')
-    run(parser, analyze, 'verbose', 'start', args=args)
+    group.add_argument(
+        '--limit', default=None, type=int,
+        help='Analyze at most that many objects. Default: no limit')
+    run(parser, analyze, 'verbose', 'start', 'limit', args=args)

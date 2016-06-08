@@ -84,6 +84,23 @@ def test_migrate__find_obj_with_binary_content__2(zodb_storage, zodb_root):
     assert b'bär2' == result[0][3]
 
 
+def test_migrate__find_obj_with_binary_content__3(zodb_storage, zodb_root):
+    """It stops the search after the given limit."""
+    zodb_root['obj'] = Example(
+        binary=b'bär1',
+        reference=Example(binary=b'bär2'))
+    transaction.commit()
+
+    # By default there is no limit:
+    assert 2 == len(list(find_obj_with_binary_content(zodb_storage, {})))
+
+    # By request search is stopped after the limit is reached:
+    result = list(find_obj_with_binary_content(
+        zodb_storage, {}, limit=2))
+    assert 1 == len(result)
+    assert b'bär1' == result[0][3]
+
+
 def test_migrate__wake_object__1(caplog):
     """It logs POSKeyErrors.
 
