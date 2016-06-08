@@ -2,7 +2,7 @@
 Change log
 ==========
 
-0.2 (unreleased)
+0.2 (2016-06-08)
 ================
 
 - Split up the two functions previously united in the script
