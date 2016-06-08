@@ -38,7 +38,7 @@ def test_migrate__main__1():
             zodb.py3migrate.migrate.main(['path/to/Data.fs'])
             filestorage.assert_called_once_with(
                 'path/to/Data.fs', blob_dir=None)
-            analyze.assert_called_once_with(filestorage(), False)
+            analyze.assert_called_once_with(filestorage(), False, None)
 
 
 def test_migrate__main__1_5():
@@ -49,6 +49,15 @@ def test_migrate__main__1_5():
                 ['path/to/Data.fs', '--blob-dir', 'path/to/blob_dir'])
             filestorage.assert_called_once_with(
                 'path/to/Data.fs', blob_dir='path/to/blob_dir')
+
+
+def test_migrate__main__1_6():
+    """It calls `migrate` with given start OID."""
+    with mock.patch('ZODB.FileStorage.FileStorage') as filestorage:
+        with mock.patch('zodb.py3migrate.migrate.analyze') as analyze:
+            zodb.py3migrate.migrate.main(
+                ['path/to/Data.fs', '--start', '0x24'])
+            analyze.assert_called_once_with(filestorage(), False, '0x24')
 
 
 def test_migrate__main__2():
@@ -83,11 +92,44 @@ def test_migrate__main__4():
             convert.assert_called_once_with(filestorage(), config_path, False)
 
 
+def test_migrate__main__5(zodb_storage, zodb_root, capsys):
+    """It runs an analysis. (Integration test!)"""
+    zodb_root['obj'] = Example(binary=b'bär1')
+    transaction.commit()
+    zodb_storage.close()
+
+    zodb.py3migrate.migrate.main([zodb_storage.getName(), '--start=0x01'])
+    out, err = capsys.readouterr()
+    assert '''\
+Found 1 binary fields: (number of occurrences)
+zodb.py3migrate.tests.test_migrate.Example.binary is string (1)
+''' == out
+    assert '' == err
+
+
 def test_migrate__find_obj_with_binary_content__1(zodb_storage, caplog):
     """It logs progress every `watermark` objects."""
     list(find_obj_with_binary_content(zodb_storage, {}, watermark=1))
     assert (
         '1 of about 1 objects analyzed.' == caplog.records()[-1].getMessage())
+
+
+def test_migrate__find_obj_with_binary_content__2(zodb_storage, zodb_root):
+    """It starts the search at a defined OID."""
+    zodb_root['obj'] = Example(
+        binary=b'bär1',
+        reference=Example(binary=b'bär2'))
+    transaction.commit()
+
+    # By default start at the root object, we added two objects with binary
+    # data:
+    assert 2 == len(list(find_obj_with_binary_content(zodb_storage, {})))
+
+    # By request start at requested OID:
+    result = list(find_obj_with_binary_content(
+        zodb_storage, {}, start_at='0x02'))
+    assert 1 == len(result)
+    assert b'bär2' == result[0][3]
 
 
 def test_migrate__wake_object__1(caplog):

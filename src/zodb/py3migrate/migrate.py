@@ -114,10 +114,20 @@ def get_items(obj):
     return items
 
 
-def find_obj_with_binary_content(storage, errors, watermark=10000):
+def find_obj_with_binary_content(
+        storage, errors, start_at=None, watermark=10000):
+    """Generator which finds objects in `storage` having binary content.
+
+    Yields tuple: (object, data, key-name, value, type)
+
+    `type` can be one of 'string', 'dict', 'iterable', 'key'.
+    """
     db = DB(storage)
     connection = db.open()
-    next = None
+    if start_at is not None:
+        next = ZODB.utils.repr_to_oid(start_at)
+    else:
+        next = None  # first OID in storage
     len_storage = len(storage)
     log.warn('Analyzing about %s objects.', len_storage)
     count = 0
@@ -167,7 +177,7 @@ def get_format_string(obj, display_type=False, verbose=False):
     return format_string
 
 
-def analyze_storage(storage, verbose=False):
+def analyze_storage(storage, verbose=False, start_at=None):
     """Analyze a ``FileStorage``.
 
     Returns a tuple `(result, errors)`
@@ -180,7 +190,7 @@ def analyze_storage(storage, verbose=False):
     result = collections.defaultdict(int)
     errors = collections.defaultdict(int)
     for obj, data, key, value, type_ in find_obj_with_binary_content(
-            storage, errors):
+            storage, errors, start_at=start_at):
         klassname = get_classname(obj)
         format_string = get_format_string(
             obj, display_type=True, verbose=verbose)
@@ -247,11 +257,11 @@ def read_mapping(config_path):
     return mapping
 
 
-def analyze(storage, verbose=False):
+def analyze(storage, verbose=False, start_at=None):
     """Analyse a whole file storage and print out the results."""
     transaction.doom()
     print_results(
-        *analyze_storage(storage, verbose=verbose),
+        *analyze_storage(storage, verbose=verbose, start_at=start_at),
         verb='Found', verbose=verbose)
 
 
@@ -280,13 +290,19 @@ def main(args=None):
     parser.add_argument(
         '-b', '--blob-dir', default=None,
         help='Path to the blob directory if ZODB blobs are used.')
-    parser.add_argument(
+    actions = parser.add_mutually_exclusive_group()
+    actions.add_argument(
         '-c', '--config', help='Path to conversion config file.')
+    actions.add_argument(
+        '--start', default=None,
+        help='OID to start analysis with. Default: start with first OID in '
+        'storage.')
     parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='Be more verbose in output')
     parser.add_argument(
         '--pdb', action='store_true', help='Drop into a debugger on an error')
+
     args = parser.parse_args(args)
     try:
         storage = ZODB.FileStorage.FileStorage(
@@ -294,7 +310,7 @@ def main(args=None):
         if args.config:
             convert(storage, args.config, args.verbose)
         else:
-            analyze(storage, args.verbose)
+            analyze(storage, args.verbose, args.start)
     except:
         if args.pdb:
             pdb.post_mortem()
