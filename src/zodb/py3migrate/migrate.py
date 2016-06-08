@@ -4,17 +4,13 @@ import BTrees.LOBTree
 import BTrees.OIBTree
 import BTrees.OLBTree
 import BTrees.OOBTree
-import ConfigParser
 import ZODB.FileStorage
 import ZODB.POSException
 import argparse
 import collections
-import email
 import logging
 import pdb  # noqa
 import persistent
-import pkg_resources
-import transaction
 import zodbpickle
 
 
@@ -177,28 +173,6 @@ def get_format_string(obj, display_type=False, verbose=False):
     return format_string
 
 
-def analyze_storage(storage, verbose=False, start_at=None):
-    """Analyze a ``FileStorage``.
-
-    Returns a tuple `(result, errors)`
-    Where
-      `result` is a dict mapping a dotted name of an attribute to the
-        number of occurrences in the storage and
-      `errors` is a dict mapping a dotted name of a class those instances have
-        no `__dict__` to the number of occurrences.
-    """
-    result = collections.defaultdict(int)
-    errors = collections.defaultdict(int)
-    for obj, data, key, value, type_ in find_obj_with_binary_content(
-            storage, errors, start_at=start_at):
-        klassname = get_classname(obj)
-        format_string = get_format_string(
-            obj, display_type=True, verbose=verbose)
-        result[format_string.format(**locals())] += 1
-
-    return result, errors
-
-
 def print_results(result, errors, verb, verbose):
     """Print the analysis results."""
     if verbose:
@@ -215,102 +189,48 @@ def print_results(result, errors, verb, verbose):
         print "{} ({})".format(key, value)
 
 
-def convert_storage(storage, mapping, verbose=False):
-    """Iterate ZODB objects with binary content and apply mapping."""
-    result = collections.defaultdict(int)
-    errors = collections.defaultdict(int)
-    for obj, data, key, value, type_ in find_obj_with_binary_content(
-            storage, errors):
-        klassname = get_classname(obj)
-        dotted_name = get_format_string(obj).format(**locals())
-        encoding = mapping.get(dotted_name, None)
-        if encoding is None or type_ == 'key':
-            continue
-
-        if encoding == 'zodbpickle.binary':
-            data[key] = zodbpickle.binary(value)
-        else:
-            data[key] = value.decode(encoding)
-
-        obj._p_changed = True
-        result[dotted_name] += 1
-
-    return result, errors
-
-
-def read_mapping(config_path):
-    """Create mapping from INI file.
-
-    It maps the section options to the name of their section, thus a
-    configuration like below results in a mapping {'foo.Bar.baz': 'utf-8'}.
-
-    [utf-8]
-    foo.Bar.baz
-
-    """
-    parser = ConfigParser.ConfigParser(allow_no_value=True)
-    parser.optionxform = str  # avoid lower casing of option names
-    parser.read(config_path)
-    mapping = {}
-    for section in parser.sections():
-        mapping.update(dict.fromkeys(parser.options(section), section))
-    return mapping
-
-
-def analyze(storage, verbose=False, start_at=None):
-    """Analyse a whole file storage and print out the results."""
-    transaction.doom()
-    print_results(
-        *analyze_storage(storage, verbose=verbose, start_at=start_at),
-        verb='Found', verbose=verbose)
-
-
-def convert(storage, config_path, verbose=False):
-    """Convert binary strings according to mapping read from config file."""
-    mapping = read_mapping(config_path)
-    print_results(
-        *convert_storage(storage, mapping, verbose=verbose),
-        verb='Converted', verbose=verbose)
-
-
 def sorted_by_key(dict):
     """Get dict entries sorted by the key."""
     for key in sorted(dict):
         yield key, dict[key]
 
 
-def main(args=None):
-    """Entry point for the script."""
-    logging.basicConfig(level=logging.INFO)
-    description = email.message_from_string(pkg_resources.get_distribution(
-        'zodb.py3migrate').get_metadata('PKG-INFO'))['summary']
+def get_argparse_parser(description):
+    """Return an ArgumentParser with the default configuration."""
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
         'zodb_path', help='Path to Data.fs', metavar='Data.fs')
-    parser.add_argument(
+    group = parser.add_argument_group('General options')
+    group.add_argument(
         '-b', '--blob-dir', default=None,
         help='Path to the blob directory if ZODB blobs are used.')
-    actions = parser.add_mutually_exclusive_group()
-    actions.add_argument(
-        '-c', '--config', help='Path to conversion config file.')
-    actions.add_argument(
-        '--start', default=None,
-        help='OID to start analysis with. Default: start with first OID in '
-        'storage.')
-    parser.add_argument(
+    group.add_argument(
         '-v', '--verbose', action='store_true',
         help='Be more verbose in output')
-    parser.add_argument(
+    group.add_argument(
         '--pdb', action='store_true', help='Drop into a debugger on an error')
+    return parser
+
+
+def run(parser, callable, *arg_names, **kw):
+    """Parse the command line args and feed them to `callable`.
+
+    *arg_names ... command line arguments which should be used as arguments of
+                   the `callable`.
+    **kw ... Only the key `args` is allowed here to override the command line
+             arguments in tests.
+    """
+    logging.basicConfig(level=logging.INFO)
+    args = kw.pop('args', None)
+    assert not kw, \
+        "Don't know how to handle the following kwargs: {!r}".format(kw)
 
     args = parser.parse_args(args)
     try:
         storage = ZODB.FileStorage.FileStorage(
             args.zodb_path, blob_dir=args.blob_dir)
-        if args.config:
-            convert(storage, args.config, args.verbose)
-        else:
-            analyze(storage, args.verbose, args.start)
+        callable_args = [getattr(args, x) for x in arg_names]
+        return callable(storage, *callable_args)
     except:
         if args.pdb:
             pdb.post_mortem()

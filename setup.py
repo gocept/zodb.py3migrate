@@ -1,7 +1,7 @@
 # This should be only one line. If it must be multi-line, indent the second
 # line onwards to keep the PKG-INFO file format intact.
 """Helper to check if ZODB is Python 3 ready by displaying binary fields that might need conversion to unicode.
-"""
+"""  # noqa
 
 from setuptools import setup, find_packages
 import glob
@@ -34,7 +34,8 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'zodb-py3migrate = zodb.py3migrate.migrate:main',
+            'zodb-py3migrate-analyze = zodb.py3migrate.analyze:main',
+            'zodb-py3migrate-convert = zodb.py3migrate.convert:main',
             'zodb-py3migrate-magic = zodb.py3migrate.magic:main',
         ],
     },

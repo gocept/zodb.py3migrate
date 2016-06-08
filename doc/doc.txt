@@ -24,8 +24,9 @@ Upgrade workflow
 #. Install ``zodb.py3migrate`` into your project, so it has access to your
    persistent classes when reading objects from the ZODB.
 
-#. Use the entry point ``bin/zodb-py3migrate path/to/Data.fs`` to run the
-   script.
+#. Run the script using::
+
+    bin/zodb-py3migrate-analyze path/to/Data.fs
 
    * The script shows a list of attributes and keys grouped by their class that
      need to be converted because they are binary strings with an encoding different from ASCII. You have to decide for each attribute if it really
@@ -57,13 +58,14 @@ Upgrade workflow
 #. Convert the ``PythonScript`` objects inside the ZODB to be Python 3
    compatible code. (Find all of them using the ``Find`` tab in the ZMI.)
 
-#. Convert existing data in the ZODB for Python 3 compatibility by calling
-   ``bin/zodb-py3migrate path/to/Data.fs --config=conversion.ini``.
+#. Convert existing data in the ZODB for Python 3 compatibility by calling::
+
+    bin/zodb-py3migrate-convert path/to/Data.fs --config=convert.ini
 
    * .. warning:: This call changes the database file in place, so only call
                   it on a copy of your live ZODB.
 
-   * Example for conversion config file, i. e. ``conversion.ini`` in example
+   * Example for conversion config file, i. e. ``convert.ini`` in example
      call above.
 
      .. code-block:: pacmanconf
@@ -109,12 +111,15 @@ Upgrade workflow
      application needs the ``zodbpickle`` package as install dependency.
      Otherwise the converted objects will be broken.
 
-#. Call ``bin/zodb-py3migrate-magic path/to/Data.fs Python3`` to convert the
-   magic bytes of the database file to claim Python 3 compatibility. (Use
-   ``Python2`` as second argument to revert back to Python 2.)
+#. Convert the magic bytes in the database file to claim Python 3 compatibility
+   using::
 
-   * .. warning:: This call changes the database file in place, so only call
-                  it on a copy of your live ZODB.
+    bin/zodb-py3migrate-magic path/to/Data.fs Python3
+
+  (Use ``Python2`` as second argument to revert back to Python 2.)
+
+  .. warning:: This call changes the database file in place, so only call
+               it on a copy of your live ZODB.
 
 Example calls
 =============
@@ -123,7 +128,7 @@ Analyze the ZODB:
 
 .. code-block:: none
 
-    $ bin/zodb-py3migrate path/to/Data.fs
+    $ bin/zodb-py3migrate-analyze path/to/Data.fs
     Found 3 binary fields: (number of occurrences)
       foo.bar.Baz.image is string (12)
       foo.bar.Baz.legacy is iterable (1)
@@ -133,7 +138,7 @@ Convert the ZODB:
 
 .. code-block:: none
 
-    $ bin/zodb-py3migrate path/to/Data.fs --config=conversion.ini
+    $ bin/zodb-py3migrate-convert path/to/Data.fs --config=convert.ini
     Converted 2 binary fields: (number of occurrences)
       foo.bar.Baz.image (12)
       foo.bar.Baz.text (23)
