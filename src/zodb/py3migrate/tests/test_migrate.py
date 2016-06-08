@@ -1,5 +1,6 @@
 # encoding: utf-8
 from ..migrate import print_results, analyze, convert, convert_storage
+from ..migrate import find_obj_with_binary_content
 import BTrees.IIBTree
 import BTrees.OOBTree
 import Products.PythonScripts.PythonScript
@@ -84,8 +85,7 @@ def test_migrate__main__4():
 
 def test_migrate__find_obj_with_binary_content__1(zodb_storage, caplog):
     """It logs progress every `watermark` objects."""
-    list(zodb.py3migrate.migrate.find_obj_with_binary_content(
-        zodb_storage, {}, watermark=1))
+    list(find_obj_with_binary_content(zodb_storage, {}, watermark=1))
     assert (
         '1 of about 1 objects analyzed.' == caplog.records()[-1].getMessage())
 
