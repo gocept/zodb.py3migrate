@@ -5,7 +5,7 @@ Change log
 0.4 (unreleased)
 ================
 
-- Nothing changed yet.
+- Fix brown bag release.
 
 
 0.3 (2016-10-29)
