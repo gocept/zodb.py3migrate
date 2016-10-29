@@ -2,7 +2,7 @@
 Change log
 ==========
 
-0.3 (unreleased)
+0.3 (2016-10-29)
 ================
 
 - Fixes for issues #4 and #5: Converted ZODB ist now actually saved,
