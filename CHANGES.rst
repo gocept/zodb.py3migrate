@@ -5,7 +5,8 @@ Change log
 0.3 (unreleased)
 ================
 
-- Nothing changed yet.
+- Fixes for issues #4 and #5: Converted ZODB ist now actually saved,
+  using additional subtransactions improves the memory footprint.
 
 
 0.2 (2016-06-08)
