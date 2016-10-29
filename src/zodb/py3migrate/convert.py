@@ -4,6 +4,7 @@ import ConfigParser
 import collections
 import logging
 import zodbpickle
+import transaction
 
 
 log = logging.getLogger(__name__)
@@ -25,12 +26,11 @@ def convert_storage(storage, mapping, verbose=False):
             data[key] = zodbpickle.binary(value)
         else:
             data[key] = value.decode(encoding)
-
         obj._p_changed = True
         result[dotted_name] += 1
 
+    transaction.commit()
     return result, errors
-
 
 def read_mapping(config_path):
     """Create mapping from INI file.
