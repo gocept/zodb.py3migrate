@@ -2,7 +2,7 @@
 Change log
 ==========
 
-0.4 (unreleased)
+0.4 (2016-10-29)
 ================
 
 - Fix brown bag release.
