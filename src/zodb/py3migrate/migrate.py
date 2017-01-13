@@ -154,7 +154,6 @@ def find_obj_with_binary_content(
             except:
                 log.error('Could not execute %r', value, exc_info=True)
                 continue
-            connection.cacheMinimize()
 
         count += 1
         if count % watermark == 0:
