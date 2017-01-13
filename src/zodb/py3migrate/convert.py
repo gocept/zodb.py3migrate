@@ -32,6 +32,7 @@ def convert_storage(storage, mapping, verbose=False):
     transaction.commit()
     return result, errors
 
+
 def read_mapping(config_path):
     """Create mapping from INI file.
 
