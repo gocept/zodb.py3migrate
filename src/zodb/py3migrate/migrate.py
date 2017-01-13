@@ -164,15 +164,6 @@ def find_obj_with_binary_content(
             return
 
 
-def cache_summary(db):
-    """returns a simple representation about how many objects of
-    how many different types are in the cache"""
-    cd = db.cacheDetail()
-    num_types = len(cd)
-    num_objs = sum((num for type_, num in cd))
-    log.warn('{} objects of {} different types.'.format(num_objs, num_types))
-
-
 def get_format_string(obj, display_type=False, verbose=False):
     format_string = ''
     if is_treeset(obj) or is_container(obj):
