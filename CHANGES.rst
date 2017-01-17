@@ -5,7 +5,7 @@ Change log
 0.5 (unreleased)
 ================
 
-- Nothing changed yet.
+- Release as wheel and include all files in release.
 
 
 0.4 (2016-10-29)
