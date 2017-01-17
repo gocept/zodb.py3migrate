@@ -2,7 +2,7 @@
 Change log
 ==========
 
-0.5 (unreleased)
+0.5 (2017-01-17)
 ================
 
 - Release as wheel and include all files in release.
