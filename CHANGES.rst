@@ -7,6 +7,8 @@ Change log
 
 - Release as wheel and include all files in release.
 
+- Ensure compatibility with ``setuptools >= 30``.
+
 
 0.4 (2016-10-29)
 ================
