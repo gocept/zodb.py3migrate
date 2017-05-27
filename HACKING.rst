@@ -6,7 +6,7 @@ Developing
     `gocept <http://gocept.com/>`_ <mail@gocept.com>
 
 :Online documentation:
-    https://pythonhosted.org/zodb.py3migrate/
+    http://zodbpy3migrate.readthedocs.io/
 
 :PyPI page:
     https://pypi.python.org/pypi/zodb.py3migrate

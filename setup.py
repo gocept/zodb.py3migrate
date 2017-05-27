@@ -38,7 +38,7 @@ setup(
     author='gocept <mail@gocept.com>',
     author_email='mail@gocept.com',
     license='MIT License',
-    url='https://bitbucket.org/gocept/zodb.py3migrate/',
+    url='https://github.com/gocept/zodb.py3migrate/',
 
     keywords='zodb python3',
     classifiers="""\
