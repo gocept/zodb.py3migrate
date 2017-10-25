@@ -13,4 +13,6 @@ get your database ready for using it with Python 3. It is able to:
 
 This package is compatible with Python version 2.7.
 
+The documentation is at https://zodbpy3migrate.readthedocs.io.
+
 .. _ZODB : http://zodb.org
