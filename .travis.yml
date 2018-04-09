@@ -8,3 +8,7 @@ install:
     - bin/buildout
 script:
     - bin/test
+cache:
+  pip: true
+  directories:
+    - eggs/
