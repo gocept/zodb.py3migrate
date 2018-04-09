@@ -62,8 +62,7 @@ def test_migrate__run__3(parser):
 def test_migrate__find_obj_with_binary_content__1(zodb_storage, caplog):
     """It logs progress every `watermark` objects."""
     list(find_obj_with_binary_content(zodb_storage, {}, watermark=1))
-    assert ['Analyzing about 1 objects.',
-            '1 of about 1 objects analyzed.'] == [
+    assert '1 of about 1 objects analyzed.' in [
         x.getMessage() for x in caplog.records]
 
 
