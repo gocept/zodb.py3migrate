@@ -1,3 +1,19 @@
+.. image:: https://travis-ci.org/gocept/zodb.py3migrate.svg?branch=master
+        :target: https://travis-ci.org/gocept/zodb.py3migrate.svg
+
+.. image:: https://readthedocs.org/projects/zodbpy3migrate/badge/?version=latest
+        :target: https://zodbpy3migrate.readthedocs.io
+        :alt: Documentation Status
+
+.. image:: https://img.shields.io/pypi/v/zodb.py3migrate.svg
+        :target: https://pypi.org/project/zodb.py3migrate/
+        :alt: PyPI
+
+.. image:: https://img.shields.io/pypi/pyversions/zodb.py3migrate.svg
+        :target: https://pypi.org/project/zodb.py3migrate/
+        :alt: Python versions
+
+
 ===================================
 zodb.py3migrate - ZODB and Python 3
 ===================================
