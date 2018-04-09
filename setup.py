@@ -21,7 +21,6 @@ setup(
         'test': [
             'mock',
             'pytest',
-            'pytest-capturelog',
             'transaction',
             'Products.PythonScripts',
         ],

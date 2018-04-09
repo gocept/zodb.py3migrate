@@ -62,8 +62,9 @@ def test_migrate__run__3(parser):
 def test_migrate__find_obj_with_binary_content__1(zodb_storage, caplog):
     """It logs progress every `watermark` objects."""
     list(find_obj_with_binary_content(zodb_storage, {}, watermark=1))
-    assert (
-        '1 of about 1 objects analyzed.' == caplog.records()[-2].getMessage())
+    assert ['Analyzing about 1 objects.',
+            '1 of about 1 objects analyzed.'] == [
+        x.getMessage() for x in caplog.records]
 
 
 def test_migrate__find_obj_with_binary_content__2(zodb_storage, zodb_root):
@@ -112,7 +113,7 @@ def test_migrate__wake_object__1(caplog):
             raise ZODB.POSException.POSKeyError('\x00')
 
     zodb.py3migrate.migrate.wake_object(Sleepy())
-    rec = caplog.records()[-1]
+    rec = caplog.records[-1]
     assert "POSKeyError: '\\x00'" == rec.getMessage()
 
 

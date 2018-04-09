@@ -151,7 +151,7 @@ def find_obj_with_binary_content(
                 type_ = find_binary(key)
                 if type_ is not None:
                     yield obj, data, key, key, 'key'
-            except:
+            except Exception:
                 log.error('Could not execute %r', value, exc_info=True)
                 continue
 
@@ -236,7 +236,7 @@ def run(parser, callable, *arg_names, **kw):
             args.zodb_path, blob_dir=args.blob_dir)
         callable_args = [getattr(args, x) for x in arg_names]
         return callable(storage, *callable_args)
-    except:
+    except Exception:
         if args.pdb:
             pdb.post_mortem()
         raise

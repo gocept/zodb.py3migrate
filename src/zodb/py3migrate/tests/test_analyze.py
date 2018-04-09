@@ -169,7 +169,7 @@ def test_analyze__analyze_storage__9(zodb_storage, zodb_root, caplog):
     with mock.patch('zodb.py3migrate.migrate.find_binary',
                     side_effect=RuntimeError):
         result, errors = analyze_storage(zodb_storage)
-        assert caplog.records()[-1].exc_text.endswith('RuntimeError')
+        assert caplog.records[-1].exc_text.endswith('RuntimeError')
 
 
 def test_analyze__analyze_storage__10(zodb_storage, zodb_root):
@@ -208,7 +208,7 @@ def test_analyze__analyze_storage__12(zodb_storage, zodb_root, caplog):
     } == result
     assert {} == errors
     # There is no error message in the log:
-    assert 'Analyzing about 2 objects.' == caplog.records()[-1].getMessage()
+    assert 'Analyzing about 2 objects.' == caplog.records[-1].getMessage()
 
 
 def test_analyze__analyze__1(zodb_storage, capsys):
