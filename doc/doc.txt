@@ -21,8 +21,16 @@ There are the following reasons for this behavior:
 Upgrade workflow
 ================
 
+#. Upgrade your application to ZODB >= 4, older versions are not supported for
+   a migration. (For a `Zope` based application the best way is to upgrade to
+   `Zope 4` which already uses a current ZODB version. Older Zope versions
+   might be using a too old ZODB version.)
+
 #. Install ``zodb.py3migrate`` into your project, so it has access to your
-   persistent classes when reading objects from the ZODB.
+   persistent classes when reading objects from the ZODB:
+
+   * This can be done using `zc.buildout` resp. `pip`. (It depends how you have
+     installed your application.)
 
 #. Run the script using::
 

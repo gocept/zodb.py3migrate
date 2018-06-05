@@ -5,7 +5,9 @@ Change log
 0.6 (unreleased)
 ================
 
-- Nothing changed yet.
+- Update requirements to ``ZODB >= 4`` as with an older version the migration
+  cannot be done successfully.
+  (`#13 <https://github.com/gocept/zodb.py3migrate/issues/13>`_)
 
 
 0.5 (2017-01-17)

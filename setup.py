@@ -12,7 +12,7 @@ setup(
     version='0.6.dev0',
 
     install_requires=[
-        'ZODB3',
+        'ZODB3 >= 3.11',
         'setuptools',
         'zodbpickle',
     ],
