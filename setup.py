@@ -9,7 +9,7 @@ import glob
 
 setup(
     name='zodb.py3migrate',
-    version='0.6.dev0',
+    version='0.6',
 
     install_requires=[
         'ZODB3 >= 3.11',

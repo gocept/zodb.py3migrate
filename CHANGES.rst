@@ -2,7 +2,7 @@
 Change log
 ==========
 
-0.6 (unreleased)
+0.6 (2018-06-05)
 ================
 
 - Update requirements to ``ZODB >= 4`` as with an older version the migration
