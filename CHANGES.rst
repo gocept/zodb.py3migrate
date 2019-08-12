@@ -5,7 +5,8 @@ Change log
 0.7 (unreleased)
 ================
 
-- Nothing changed yet.
+- Deprecated the package in favour of
+  `zodbupdate <https://github.com/zopefoundation/zodbupdate>`_.
 
 
 0.6 (2018-06-05)
