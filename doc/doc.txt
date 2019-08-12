@@ -2,6 +2,9 @@
 zodb.py3migrate
 ===============
 
+.. caution::
+    This package is deprecated, please use `zodbupdate <https://github.com/zopefoundation/zodbupdate>`_ instead!
+
 Reason for this package
 =======================
 

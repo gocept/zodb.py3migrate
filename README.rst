@@ -5,18 +5,14 @@
         :target: https://zodbpy3migrate.readthedocs.io
         :alt: Documentation Status
 
-.. image:: https://img.shields.io/pypi/v/zodb.py3migrate.svg
-        :target: https://pypi.org/project/zodb.py3migrate/
-        :alt: PyPI
 
-.. image:: https://img.shields.io/pypi/pyversions/zodb.py3migrate.svg
-        :target: https://pypi.org/project/zodb.py3migrate/
-        :alt: Python versions
+===============================================
+DEPRECATED: zodb.py3migrate - ZODB and Python 3
+===============================================
 
+.. caution::
+    This package is deprecated, please use `zodbupdate <https://github.com/zopefoundation/zodbupdate>`_ instead!
 
-===================================
-zodb.py3migrate - ZODB and Python 3
-===================================
 
 If you have a ZODB_ database written using Python 2.x this package helps you to
 get your database ready for using it with Python 3. It is able to:
